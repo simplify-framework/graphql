@@ -3,14 +3,6 @@ const path = require('path')
 const { ApolloServer, gql } = require('apollo-server');
 const schema = fs.readFileSync(path.resolve(__dirname, 'graphql.schema'), 'utf8')
 const typeDefs = gql(schema);
-typeDefs.definitions.map(def => {
-    console.log(def, def.name.value)
-    def.fields && def.fields.map(f => {
-        console.log(" + ", f.kind)
-        console.log(" + ", f.name.value)
-        console.log(" + ", f.type.type ? f.type.type.name: f.type.type)
-    })
-})
 
 const books = [
     {

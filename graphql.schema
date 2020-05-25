@@ -20,9 +20,16 @@ input FunctionInput {
     Template: String
 }
 
+input ChainInput {
+    Run: FunctionInput,
+    Next: String
+    Fallback: String
+    Retry: Int
+}
+
 directive @GraphQLChains(
     Name: String
-    Chains: [FunctionInput]
+    Chains: [ChainInput]
 ) on FIELD_DEFINITION
 
 directive @GraphQLFunction(
@@ -30,6 +37,7 @@ directive @GraphQLFunction(
     Policy: String
     Runtime: String
     Template: String
+    Chains: [ChainInput]
 ) on OBJECT | FIELD_DEFINITION
 
 directive @GraphQLEndpoint (
@@ -41,6 +49,7 @@ directive @GraphQLEndpoint (
 ) on OBJECT
 
 directive @GraphQLDataSource (
+    Name: String!
     Type: GraphQLSourceType
     Cache: GraphQLCacheType
 ) on OBJECT
@@ -48,6 +57,7 @@ directive @GraphQLDataSource (
 # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 # This "Book" type defines the queryable fields for every book in our data source.
 type Book @GraphQLDataSource(
+    Name: "starwarsBookTable"
     Type: DYNAMODB
     Cache: INDEXES
 ) {
@@ -56,6 +66,7 @@ type Book @GraphQLDataSource(
 }
 
 type Author @GraphQLDataSource(
+    Name: "starwarsAuthorStorage"
     Type: STORAGE
     Cache: STREAM
 ) {
@@ -69,15 +80,26 @@ input AuthorInput {
 # The "Query" type is special: it lists all of the available queries that
 # clients can execute, along with the return type for each. In this
 # case, the "books" query returns an array of zero or more Books (defined above).
-type Query @GraphQLEndpoint(Name: "GraphApiGatewayQuery", Engine: FARGATE) {
-    books: [Book] @GraphQLFunction(Name: "getBookFunction")
+type Query @GraphQLEndpoint(Name: "graphApiGatewayQuery", Engine: FARGATE) {
+    listBooks: [Book] @GraphQLFunction(Name: "listBookFunction")
+    getBook(title: String): Book @GraphQLFunction(Name: "getBookFunction")
 }
 
 type Mutation 
-@GraphQLEndpoint(Name: "GraphApiGatewayMutation", Engine: LAMBDA)
+@GraphQLEndpoint(Name: "graphApiGatewayMutation", Engine: LAMBDA)
 @GraphQLFunction(Name: "genericAuthFunction", Runtime: "nodejs12.x") {
     addBook(title: String, author: AuthorInput): [Book]
-        @GraphQLChains(Name: "addBookChain", Chains:[{ Name: "checkBookExisted" } { Name: "addNewBook" }])
+        @GraphQLChains(Name: "addBookChain", Chains: [
+            { Run: { Name: "checkBookExisted" }, Next: "addNewBook", Fallback: "doneBook", Retry: 3 }
+            { Run: { Name: "addNewBook" }, Next: "doneBook", Fallback: "errorBook"  }
+            { Run: { Name: "doneBook" }, Next: "NONE", Fallback: "NONE"  }
+            { Run: { Name: "errorBook" }, Next: "NONE", Fallback: "NONE"  }
+        ])
     remBook(title: String, author: AuthorInput): [Book]
-        @GraphQLFunction(Name: "remBookFunction")
+        @GraphQLFunction(Name: "remBookFunction", Chains: [
+            { Run: { Name: "checkBookExisted" }, Next: "remNewBook", Fallback: "doneBook" }
+            { Run: { Name: "remNewBook" }, Next: "doneBook", Fallback: "errorBook"  }
+            { Run: { Name: "doneBook" }, Next: "NONE", Fallback: "NONE"  }
+            { Run: { Name: "errorBook" }, Next: "NONE", Fallback: "NONE"  }
+        ])
 }
