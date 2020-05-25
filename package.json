@@ -1,0 +1,16 @@
+{
+  "name": "graphql-server-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^2.13.1",
+    "graphql": "^15.0.0"
+  }
+}

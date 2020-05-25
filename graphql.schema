@@ -1,0 +1,83 @@
+enum GraphQLEngineType { FARGATE LAMBDA KUBERNETES }
+enum AuthorizationMode { SIGV4 COGNITO NONE }
+enum GraphQLSourceType { DYNAMODB MONGODB STORAGE NONE }
+enum GraphQLCacheType { INDEXES STREAM NONE }
+
+input GraphQLOptions { 
+    AuthMode: AuthorizationMode
+    AuthorizationId: String
+    EnableApiKey: Boolean
+    BurstLimit: Int
+    RateLimit: Int 
+    QuotaLimit: Int
+    QuotaUnit: String
+}
+
+input FunctionInput {
+    Name: String
+    Policy: String
+    Runtime: String
+    Template: String
+}
+
+directive @GraphQLChains(
+    Name: String
+    Chains: [FunctionInput]
+) on FIELD_DEFINITION
+
+directive @GraphQLFunction(
+    Name: String
+    Policy: String
+    Runtime: String
+    Template: String
+) on OBJECT | FIELD_DEFINITION
+
+directive @GraphQLEndpoint (
+    Name: String!
+    Engine: GraphQLEngineType
+    Region: String
+    Profile: String
+    Options: GraphQLOptions
+) on OBJECT
+
+directive @GraphQLDataSource (
+    Type: GraphQLSourceType
+    Cache: GraphQLCacheType
+) on OBJECT
+
+# Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
+# This "Book" type defines the queryable fields for every book in our data source.
+type Book @GraphQLDataSource(
+    Type: DYNAMODB
+    Cache: INDEXES
+) {
+    title: String
+    author: Author!
+}
+
+type Author @GraphQLDataSource(
+    Type: STORAGE
+    Cache: STREAM
+) {
+    name: String!
+}
+
+input AuthorInput {
+    name: String!
+}
+
+# The "Query" type is special: it lists all of the available queries that
+# clients can execute, along with the return type for each. In this
+# case, the "books" query returns an array of zero or more Books (defined above).
+type Query @GraphQLEndpoint(Name: "GraphApiGatewayQuery", Engine: FARGATE) {
+    books: [Book] @GraphQLFunction(Name: "getBookFunction")
+}
+
+type Mutation 
+@GraphQLEndpoint(Name: "GraphApiGatewayMutation", Engine: LAMBDA)
+@GraphQLFunction(Name: "genericAuthFunction", Runtime: "nodejs12.x") {
+    addBook(title: String, author: AuthorInput): [Book]
+        @GraphQLChains(Name: "addBookChain", Chains:[{ Name: "checkBookExisted" } { Name: "addNewBook" }])
+    remBook(title: String, author: AuthorInput): [Book]
+        @GraphQLFunction(Name: "remBookFunction")
+}

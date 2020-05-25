@@ -1,0 +1,18 @@
+# Write your query or mutation here
+query GetBooksAndAuthors {
+  books {
+    title
+    author {
+      name
+    }
+  }
+}
+
+mutation CreateBook {
+  addBook(title: "Fox in Socks", author: { name: "Dr. Seuss" }) {
+    title
+    author {
+      name
+    }
+  }
+}
