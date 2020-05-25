@@ -6,7 +6,7 @@ enum GraphQLCacheType { INDEXES STREAM NONE }
 input GraphQLOptions { 
     AuthMode: AuthorizationMode
     AuthorizationId: String
-    EnableApiKey: Boolean
+    ApiKey: Boolean
     BurstLimit: Int
     RateLimit: Int 
     QuotaLimit: Int
@@ -23,11 +23,11 @@ input FunctionInput {
 input ChainInput {
     Run: FunctionInput,
     Next: String
-    Fallback: String
+    Other: String
     Retry: Int
 }
 
-directive @GraphQLChains(
+directive @GraphQLFunctionSet(
     Name: String
     Chains: [ChainInput]
 ) on FIELD_DEFINITION
@@ -41,7 +41,13 @@ directive @GraphQLFunction(
 ) on OBJECT | FIELD_DEFINITION
 
 directive @GraphQLEndpoint (
+    Path: String!
+    Options: GraphQLOptions
+) on OBJECT
+
+directive @GraphQLServer (
     Name: String!
+    Path: String
     Engine: GraphQLEngineType
     Region: String
     Profile: String
@@ -52,7 +58,7 @@ directive @GraphQLDataSource (
     Name: String!
     Type: GraphQLSourceType
     Cache: GraphQLCacheType
-)
+) on OBJECT
 
 # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
 # This "Book" type defines the queryable fields for every book in our data source.
@@ -80,26 +86,38 @@ input AuthorInput {
 # The "Query" type is special: it lists all of the available queries that
 # clients can execute, along with the return type for each. In this
 # case, the "books" query returns an array of zero or more Books (defined above).
-type Query @GraphQLEndpoint(Name: "graphApiGatewayQuery", Engine: FARGATE) {
-    listBooks: [Book] @GraphQLFunction(Name: "listBookFunction")
-    getBook(title: String): Book @GraphQLFunction(Name: "getBookFunction")
+type Query
+    @GraphQLServer(Name: "graphApiGatewayQuery", Engine: FARGATE) {
+    listBooks: [Book]
+        @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE ApiKey: false })
+        @GraphQLFunction(Name: "listBookFunction")
+    getBook(title: String): Book
+        @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE ApiKey: false })
+        @GraphQLFunction(Name: "getBookFunction")
 }
 
-type Mutation 
-@GraphQLEndpoint(Name: "graphApiGatewayMutation", Engine: LAMBDA)
-@GraphQLFunction(Name: "genericAuthFunction", Runtime: "nodejs12.x") {
+type Mutation
+    @GraphQLServer(Name: "graphApiGatewayMutation", Engine: LAMBDA) {
     addBook(title: String, author: AuthorInput): [Book]
-        @GraphQLChains(Name: "addBookChain", Chains: [
-            { Run: { Name: "checkBookExisted" }, Next: "addNewBook", Fallback: "doneBook", Retry: 3 }
-            { Run: { Name: "addNewBook" }, Next: "doneBook", Fallback: "errorBook"  }
-            { Run: { Name: "doneBook" }, Next: "NONE", Fallback: "NONE"  }
-            { Run: { Name: "errorBook" }, Next: "NONE", Fallback: "NONE"  }
+        @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 ApiKey: true })
+        @GraphQLFunctionSet(Name: "addBookFunctionSet", Chains: [
+            { Run: { Name: "checkBookExisted" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
+            { Run: { Name: "addNewBook" }, Next: "doneNewBook", Other: "errorNewBook"  }
+            { Run: { Name: "doneNewBook" }, Next: "NONE", Other: "NONE"  }
+            { Run: { Name: "errorNewBook" }, Next: "NONE", Other: "NONE"  }
         ])
-    remBook(title: String, author: AuthorInput): [Book]
-        @GraphQLFunction(Name: "remBookFunction", Chains: [
-            { Run: { Name: "checkBookExisted" }, Next: "remNewBook", Fallback: "doneBook" }
-            { Run: { Name: "remNewBook" }, Next: "doneBook", Fallback: "errorBook"  }
-            { Run: { Name: "doneBook" }, Next: "NONE", Fallback: "NONE"  }
-            { Run: { Name: "errorBook" }, Next: "NONE", Fallback: "NONE"  }
+    deleteBook(title: String, author: AuthorInput): [Book]
+        @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 ApiKey: true })
+        @GraphQLFunction(Name: "deleteBookFunction")
+    readBook(title: String, author: AuthorInput): [Book]
+        @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
+        @GraphQLFunction(Name: "readBookFunction", Chains: [
+            { Run: { Name: "checkBookPaid" }, Next: "readNewBook", Other: "errorPaidBook" }
+            { Run: { Name: "readNewBook" }, Next: "doneReadBook", Other: "NONE"  }
+            { Run: { Name: "doneReadBook" }, Next: "NONE", Other: "NONE"  }
+            { Run: { Name: "errorPaidBook" }, Next: "NONE", Other: "NONE"  }
         ])
+    likeBook(title: String, author: AuthorInput): [Book]
+        @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
+        @GraphQLFunction(Name: "readBookFunction")
 }
