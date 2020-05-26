@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+'use strict';
 const fs = require('fs')
 const path = require('path')
 const Hogan = require('hogan.js');
@@ -96,9 +98,9 @@ function objectFieldParse(obj, name) {
 
 function objectDirectiveParser(def) {
     const directives = def.directives.map(d => {
-        let arguments = {}
+        let argsField = {}
         const args = d.arguments.map(arg => {
-            arguments[arg.name.value] = arg.value.value ? arg.value.value : objectValueParse(arg.value)
+            argsField[arg.name.value] = arg.value.value ? arg.value.value : objectValueParse(arg.value)
             return {
                 toString: () => `${arg.name.value}=${arg.value.value}`
             }
@@ -106,7 +108,7 @@ function objectDirectiveParser(def) {
         return {
             toString: () => `@${d.name.value} (${args.toString()})`,
             Kind: d.name.value,
-            ...arguments
+            ...argsField
         }
     })
     return {
@@ -118,9 +120,9 @@ function objectDirectiveParser(def) {
 
 function fieldDirectiveParser(field) {
     const directives = field.directives.map(d => {
-        let arguments = {}
+        let argsField = {}
         const args = d.arguments.map(arg => {
-            arguments[arg.name.value] = arg.value.value ? arg.value.value : objectValueParse(arg.value)
+            argsField[arg.name.value] = arg.value.value ? arg.value.value : objectValueParse(arg.value)
             return {
                 toString: () => `${arg.name.value}=${arg.value.value ? arg.value.value : objectValueParse(arg.value).toString()}`
             }
@@ -128,7 +130,7 @@ function fieldDirectiveParser(field) {
         return {
             toString: () => `@${d.name.value} (${args.toString()})`,
             Kind: d.name.value,
-            ...arguments
+            ...argsField
         }
     })
     return {
