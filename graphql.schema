@@ -123,8 +123,8 @@ type Mutation
         @GraphQLFunctionSet(Name: "addBookFunctionSet", Chains: [
             { Run: { Name: "checkBookExisted" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
             { Run: { Name: "addNewBook" }, Next: "doneNewBook", Other: "errorNewBook"  }
-            { Run: { Name: "doneNewBook" }, Next: "NONE", Other: "NONE"  }
-            { Run: { Name: "errorNewBook" }, Next: "NONE", Other: "NONE"  }
+            { Run: { Name: "doneNewBook" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "errorNewBook" }, Next: "DONE", Other: "DONE"  }
         ])
     deleteBook(title: String, author: AuthorInput): [Book]
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 ApiKey: true })
@@ -133,9 +133,9 @@ type Mutation
         @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
         @GraphQLFunction(Name: "readBookFunction", Chains: [
             { Run: { Name: "checkBookPaid" }, Next: "readNewBook", Other: "errorPaidBook" }
-            { Run: { Name: "readNewBook" }, Next: "doneReadBook", Other: "NONE"  }
-            { Run: { Name: "doneReadBook" }, Next: "NONE", Other: "NONE"  }
-            { Run: { Name: "errorPaidBook" }, Next: "NONE", Other: "NONE"  }
+            { Run: { Name: "readNewBook" }, Next: "doneReadBook", Other: "DONE"  }
+            { Run: { Name: "doneReadBook" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "errorPaidBook" }, Next: "DONE", Other: "DONE"  }
         ])
     likeBook(title: String, author: AuthorInput): [Book]
         @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })

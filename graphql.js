@@ -234,6 +234,7 @@ typeDefs.definitions.map(def => {
                             obj.DataModel = fields.DataModel
                             obj.Parameters = convertToArrayWithNotation(fieldArguments.Arguments)
                             rootObject.Servers[serverName].Paths[endpointPath].Operations.push(obj)
+                            rootObject.Servers[serverName].Paths[endpointPath].Options = obj.Options
                         } else if (obj.Kind === "GraphQLFunction" || obj.Kind === "GraphQLFunctionSet") {
                             if (!rootObject.Servers[serverName].Paths) {
                                 rootObject.Servers[serverName].Paths = {}
@@ -243,6 +244,7 @@ typeDefs.definitions.map(def => {
                             }
                             const operation = rootObject.Servers[serverName].Paths[endpointPath].Operations.find(o => o.OperationId === fields.Name)
                             if (operation) {
+                                obj.FunctionType = obj.Kind === "GraphQLFunction" ? "Method": "Function"
                                 operation.Function = obj
                             }
                         }
@@ -308,15 +310,7 @@ function writeTemplateFile(tplFile, data, outputPath, file) {
 
 writeTemplateFile("graphql.mustache", rootObject, "./", "graphql.txt")
 
-// Object.keys(rootObject.Servers).map(k => {
-//     console.log(k, rootObject.Servers[k])
-//     Object.keys(rootObject.Servers[k].Paths).map(s => console.log(s, rootObject.Servers[k].Paths[s].Operations))
-//     Object.keys(rootObject.Servers[k].Paths).map(s => rootObject.Servers[k].Paths[s].Operations.map(op => {
-//         console.log(op.Function.Name, op.Function.Chains || '')
-//         if (op.Function.Chains) {
-//             op.Function.Chains.map(c => {
-//                 console.log(c)
-//             })
-//         }
-//     }))
-// })
+Object.keys(rootObject.Servers).map(k => {
+    console.log(rootObject.Servers[k])
+    //Object.keys(rootObject.Servers[k].Paths).map(s => console.log(s, rootObject.Servers[k].Paths[s]))
+})

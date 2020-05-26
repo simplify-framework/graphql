@@ -1,12 +1,12 @@
 {{#Servers}}
 * @{{{Kind}}} Name={{Name}} run on {{Engine}} for every {{Definition}}
     {{#Paths}}
-    POST {{Path}}
+    POST {{Path}} {{#Options}}using {{AuthMode}} authorization with ApiKey={{ApiKey}}{{/Options}}
     {{#Operations}}
         {{OperationId}} [{{#Parameters}}{{Name}}={{Kind}}{{#hasMore}}, {{/hasMore}}{{/Parameters}}] => {{DataType}}({{DataModel}}) will execute {{#Function}}@{{Kind}}={{Name}}{{/Function}}
         {{#Function}}
             {{#Chains}}
-                {{#Run}}Function={{Name}}{{/Run}}() onSuccess={{Next}}() onFailure={{Other}}() RetryOnFailure={{Retry}}
+                {{#Run}}{{FunctionType}}={{Name}}{{/Run}}() onSuccess={{Next}}() onFailure={{Other}}() RetryOnFailure={{Retry}}
             {{/Chains}}
         {{/Function}}
     {{/Operations}}
