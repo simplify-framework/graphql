@@ -1,6 +1,6 @@
 # Write your query or mutation here
 query GetBooksAndAuthors {
-  books {
+  listBooks {
     title
     author {
       name

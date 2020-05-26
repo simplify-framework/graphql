@@ -1,0 +1,42 @@
+* @GraphQLServer Name=graphApiGatewayQuery run on FARGATE for every Query
+    POST /query
+        listBooks [] => ListType(Book) will execute @GraphQLFunction=listBookFunction
+        getBook [title=String] => NamedType(Book) will execute @GraphQLFunction=getBookFunction
+* @GraphQLServer Name=graphApiGatewayMutation run on LAMBDA for every Mutation
+    POST /book/admin
+        addBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunctionSet=addBookFunctionSet
+                Function=checkBookExisted() onSuccess=addNewBook() onFailure=doneNewBook() RetryOnFailure=3
+                Function=addNewBook() onSuccess=doneNewBook() onFailure=errorNewBook() RetryOnFailure=
+                Function=doneNewBook() onSuccess=NONE() onFailure=NONE() RetryOnFailure=
+                Function=errorNewBook() onSuccess=NONE() onFailure=NONE() RetryOnFailure=
+        deleteBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=deleteBookFunction
+    POST /book/user
+        readBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=readBookFunction
+                Function=checkBookPaid() onSuccess=readNewBook() onFailure=errorPaidBook() RetryOnFailure=
+                Function=readNewBook() onSuccess=doneReadBook() onFailure=NONE() RetryOnFailure=
+                Function=doneReadBook() onSuccess=NONE() onFailure=NONE() RetryOnFailure=
+                Function=errorPaidBook() onSuccess=NONE() onFailure=NONE() RetryOnFailure=
+        likeBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=readBookFunction
+
+* Will execute Function=onBookSchedule on EVENT_RULE=scheduleOnBookEvent(every(10 mins)) => accessible to [Book] with Access=READ_ONLY
+* Will execute Function=onAuthorSchedule on TABLE_STORAGE=starwarsBookTable(UPDATE|CREATE) => accessible to [Author] with Access=READ_WRITE
+
+* [Book] persists on DataSource=TABLE_STORAGE@starwarsBookTable has Indexes=title:String
+* [Author] persists on DataSource=BLOB_STORAGE@starwarsAuthorStorage has Indexes=name:String
+
+- [DataInput] GraphQLOptions { AuthMode=AuthorizationMode, AuthorizationId=String, ApiKey=Boolean, BurstLimit=Int, RateLimit=Int, QuotaLimit=Int, QuotaUnit=String  }
+- [DataInput] GraphQLDataIndex { Name=String, Type=String  }
+- [DataInput] FunctionInput { Name=String, Policy=String, Runtime=String, Template=String  }
+- [DataInput] ChainInput { Run=FunctionInput, Next=String, Other=String, Retry=Int  }
+* [DataInput] AuthorInput { name=String  }
+
+- [EnumObject] GraphQLEngineType { FARGATE, LAMBDA, KUBERNETES  }
+- [EnumObject] AuthorizationMode { SIGV4, COGNITO, NONE  }
+- [EnumObject] GraphQLSourceType { TABLE_STORAGE, BLOB_STORAGE, EVENT_STREAM, NONE  }
+- [EnumObject] GraphQLEventType { EVENT_RULE, DATA_SOURCE, USER_EVENT  }
+- [EnumObject] GraphQLDataAccess { READ_ONLY, READ_WRITE, WRITE_ONLY, NONE  }
+
+* [DataObject] Book { title=String, author=Author  }
+* [DataObject] Author { name=String  }
+- [DataObject] Query { listBooks (...) getBook (...)  }
+- [DataObject] Mutation { addBook (...) deleteBook (...) readBook (...) likeBook (...)  }

@@ -33,7 +33,7 @@ const books = [
 
 const resolvers = {
     Query: {
-        books: () => books,
+        listBooks: () => books,
     },
     Mutation: {
         //fieldName: (parent, args, context, info) => data;
