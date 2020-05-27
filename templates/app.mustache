@@ -1,0 +1,39 @@
+'use strict';
+const fs = require('fs')
+const path = require('path')
+const { ApolloServer, gql } = require('apollo-server');
+const schema = fs.readFileSync(path.resolve(__dirname, 'graphql.schema'), 'utf8')
+const typeDefs = gql(schema);
+{{#DataSources}}
+{{^isEmpty}}
+const {{Definition}} = require('./DataModels/{{Definition}}')
+{{/isEmpty}}
+{{/DataSources}}
+
+const resolvers = {
+    {{#Servers}}
+    {{Definition}}: {
+    {{#Paths}}
+    // POST {{Path}} {{#Options}}using {{AuthMode}} authorization with ApiKey={{ApiKey}}{{/Options}}
+    {{#Operations}}
+        {{OperationId}}: () => {{#Function}}new {{Kind}}("{{Name}}"){{/Function}}{{#hasMore}},{{/hasMore}}
+    {{/Operations}}
+    {{#hasMore}},{{/hasMore}}{{^hasMore}}// END{{/hasMore}}
+    {{/Paths}}
+    }{{#hasMore}},{{/hasMore}}
+    {{/Servers}}
+}
+
+const server = new ApolloServer({
+    typeDefs, resolvers, dataSources: () => ({
+        {{#DataSources}}
+        {{^isEmpty}}
+        {{Definition}}: () => new DataSource("{{{Type}}}", "{{Name}}", {{Definition}}){{#hasMore}},{{/hasMore}}
+        {{/isEmpty}}
+        {{/DataSources}}
+    })
+})
+
+server.listen().then(({ url }) => {
+    console.log(`GraphQL server is ready at ${url}`)
+})

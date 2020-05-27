@@ -1,0 +1,7 @@
+'use strict';
+
+module.exports.{{Name}} = () => new StateExecution([
+    {{#Chains}}
+    { Run: {{#Run}}"{{Name}}"{{/Run}}, onSuccess: "{{Next}}", onFailure: "{{Other}}"{{#Retry}}, RetryOnFailure: {{Retry}}{{/Retry}} }{{#hasMore}},{{/hasMore}}
+    {{/Chains}}
+])

@@ -16,12 +16,12 @@
                 Method=readNewBook() onSuccess=doneReadBook() onFailure=DONE() RetryOnFailure=
                 Method=doneReadBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
                 Method=errorPaidBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
-        likeBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=readBookFunction
+        likeBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=listBookFunction
 
 * Will execute Function=onBookSchedule on EVENT_RULE=scheduleOnBookEvent(every(10 mins)) => accessible to [Book] with Access=READ_ONLY
 * Will execute Function=onAuthorSchedule on TABLE_STORAGE=starwarsBookTable(UPDATE|CREATE) => accessible to [Author] with Access=READ_WRITE
 
-* [Book] persists on DataSource=TABLE_STORAGE@starwarsBookTable has Indexes=title:String
+* [Book] persists on DataSource=TABLE_STORAGE@starwarsBookTable has Indexes=title:String,
 * [Author] persists on DataSource=BLOB_STORAGE@starwarsAuthorStorage has Indexes=name:String
 
 - [DataInput] GraphQLOptions { AuthMode=AuthorizationMode, AuthorizationId=String, ApiKey=Boolean, BurstLimit=Int, RateLimit=Int, QuotaLimit=Int, QuotaUnit=String  }

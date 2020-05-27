@@ -139,5 +139,5 @@ type Mutation
         ])
     likeBook(title: String, author: AuthorInput): [Book]
         @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
-        @GraphQLFunction(Name: "readBookFunction")
+        @GraphQLFunction(Name: "listBookFunction")
 }

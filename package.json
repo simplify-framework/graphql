@@ -1,14 +1,30 @@
 {
-  "name": "graphql-server-example",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
+  "name": "simplify-graphql",
+  "version": "0.1.0",
+  "description": "Simplify graphql-serverless architecture model (GSAM)",
+  "main": "entrypoint.js",
+  "bin": {
+    "simplify-graphql": "entrypoint.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "start": "node entrypoint.js -i graphql.schema"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simplify-framework/graphql.git"
+  },
+  "keywords": [
+    "graphql",
+    "lambda",
+    "faas",
+    "aws"
+  ],
+  "author": "Duong Dinh Cuong",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/simplify-framework/graphql/issues"
+  },
+  "homepage": "https://github.com/simplify-framework/graphql#README",
   "dependencies": {
     "apollo-server": "^2.13.1",
     "graphql": "^15.0.0",
