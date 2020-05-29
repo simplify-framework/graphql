@@ -5,12 +5,12 @@ const { ApolloServer, gql } = require('apollo-server');
 const schema = fs.readFileSync(path.resolve(__dirname, 'graphql.schema'), 'utf8')
 const typeDefs = gql(schema);
 
-const listBookFunction = require('./StateMachine/listBookFunction')
-const getBookFunction = require('./StateMachine/getBookFunction')
-const addBookFunctionSet = require('./StateMachine/addBookFunctionSet')
-const deleteBookFunction = require('./StateMachine/deleteBookFunction')
-const readBookFunction = require('./StateMachine/readBookFunction')
-const listBookFunction = require('./StateMachine/listBookFunction')
+const listBookFunction = require('./States/listBookFunction')
+const getBookFunction = require('./States/getBookFunction')
+const addBookFunctionSet = require('./States/addBookFunctionSet')
+const deleteBookFunction = require('./States/deleteBookFunction')
+const readBookFunction = require('./States/readBookFunction')
+const listBookFunction = require('./States/listBookFunction')
 
 const resolvers = {
     Query: {

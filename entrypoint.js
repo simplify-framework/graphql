@@ -54,21 +54,21 @@ function mainProcessor(typeDefs) {
     writeTemplateFile("templates/graphql.mustache", rootObject, "./", "graphql.txt")
     writeTemplateFile("templates/app.mustache", rootObject, "./", "app.js")
     rootObject.DataObjects.map(data => {
-        if (data.UserType) writeTemplateFile("templates/model.mustache", data, "./GraphQL/Models", `${data.Name}.js`)
+        if (data.UserType) writeTemplateFile("templates/model.mustache", data, "./GraphQL/Schemas/Models", `${data.Name}.js`)
     })
     rootObject.DataInputs.map(data => {
-        if (data.UserType) writeTemplateFile("templates/input.mustache", data, "./GraphQL/Inputs", `${data.Name}.js`)
+        if (data.UserType) writeTemplateFile("templates/input.mustache", data, "./GraphQL/Schemas/Inputs", `${data.Name}.js`)
     })
     rootObject.EnumObjects.map(data => {
-        if (data.UserType) writeTemplateFile("templates/enum.mustache", data, "./GraphQL/Models", `${data.Name}.js`)
+        if (data.UserType) writeTemplateFile("templates/enum.mustache", data, "./GraphQL/Schemas/Models", `${data.Name}.js`)
     })
     rootObject.Servers.map(server => {
         server.Paths.map(path => {
             path.Operations.map(operation => {
                 if (operation.Function.Kind == "GraphQLFunction") {
-                    writeTemplateFile("templates/state-function.mustache", { ...operation.Function, DataType: operation.DataType, DataModel: operation.DataModel }, "./GraphQL/StateMachine", `${operation.Function.Name}.js`)
+                    writeTemplateFile("templates/state-function.mustache", { ...operation.Function, DataType: operation.DataType, DataSchema: operation.DataSchema }, "./GraphQL/States", `${operation.Function.Name}.js`)
                 } else {
-                    writeTemplateFile("templates/state-functionset.mustache", { ...operation.Function, DataType: operation.DataType, DataModel: operation.DataModel }, "./GraphQL/StateMachine", `${operation.Function.Name}.js`)
+                    writeTemplateFile("templates/state-functionset.mustache", { ...operation.Function, DataType: operation.DataType, DataSchema: operation.DataSchema }, "./GraphQL/States", `${operation.Function.Name}.js`)
                 }
                 operation.Function.Chains && operation.Function.Chains.map(chain => {
                     if (chain.Run.Mode == "REMOTE") {

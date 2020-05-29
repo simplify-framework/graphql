@@ -1,22 +1,22 @@
 * @GraphQLServer Name=graphApiGatewayQuery run on FARGATE for every Query
     POST /query using NONE authorization with ApiKey=false
-        listBooks [] => ListType(Book) will execute @GraphQLFunction=listBookFunction
-        getBook [title=String] => NamedType(Book) will execute @GraphQLFunction=getBookFunction
+        listBooks [] => ListType() will execute @GraphQLFunction=listBookFunction
+        getBook [title=String] => NamedType() will execute @GraphQLFunction=getBookFunction
 * @GraphQLServer Name=graphApiGatewayMutation run on LAMBDA for every Mutation
     POST /book/admin using SIGV4 authorization with ApiKey=true
-        addBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunctionSet=addBookFunctionSet
+        addBook [title=String, author=AuthorInput] => ListType() will execute @GraphQLFunctionSet=addBookFunctionSet
                 Function=checkBookExisted() onSuccess=addNewBook() onFailure=doneNewBook() RetryOnFailure=3
                 Function=addNewBook() onSuccess=doneNewBook() onFailure=errorNewBook() RetryOnFailure=
                 Function=doneNewBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
                 Function=errorNewBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
-        deleteBook [title=String, author=AuthorInput] => NamedType(Book) will execute @GraphQLFunction=deleteBookFunction
+        deleteBook [title=String, author=AuthorInput] => NamedType() will execute @GraphQLFunction=deleteBookFunction
     POST /book/user using COGNITO authorization with ApiKey=
-        readBook [title=String, author=AuthorInput] => NamedType(Book) will execute @GraphQLFunction=readBookFunction
+        readBook [title=String, author=AuthorInput] => NamedType() will execute @GraphQLFunction=readBookFunction
                 Method=checkBookPaid() onSuccess=readNewBook() onFailure=errorPaidBook() RetryOnFailure=
                 Method=readNewBook() onSuccess=doneReadBook() onFailure=DONE() RetryOnFailure=
                 Method=doneReadBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
                 Method=errorPaidBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
-        likeBook [title=String, author=AuthorInput] => NamedType(Book) will execute @GraphQLFunction=listBookFunction
+        likeBook [title=String, author=AuthorInput] => NamedType() will execute @GraphQLFunction=listBookFunction
 
 * Will execute Function=onBookSchedule on EVENT_RULE=scheduleOnBookEvent(every(10 mins)) => accessible to [Book] with Access=READ_ONLY
 * Will execute Function=onAuthorSchedule on TABLE_STORAGE=starwarsBookTable(UPDATE|CREATE) => accessible to [Author] with Access=READ_WRITE

@@ -1,7 +1,7 @@
 'use strict';
 
 const { StateExecution } = require('../StateExecution')
-let {{DataModel}} = require('../Models/{{DataModel}}')
+let {{DataSchema}} = require('../Schemas/Models/{{DataSchema}}')
 
 module.exports.{{Name}} = (parent, args, context, info) => new StateExecution().execute([
     {{#Chains}}
@@ -10,4 +10,4 @@ module.exports.{{Name}} = (parent, args, context, info) => new StateExecution().
     {{^Chains}}
     { Run: "{{Name}}", Next: "DONE", Other: "DONE" }
     {{/Chains}}
-], { parent, args, context, info }, "{{DataType}}", {{DataModel}})
+], { parent, args, context, info }, "{{DataType}}", {{DataSchema}})

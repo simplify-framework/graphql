@@ -200,7 +200,7 @@ function fieldDirectiveParser(field) {
         toString: () => (`${directives}`),
         Name: field.name.value,
         DataType: field.type.kind,
-        DataModel: field.type.type ? field.type.type.name.value : field.type.name.value,
+        DataSchema: field.type.type ? field.type.type.name.value : field.type.name.value,
         Directives: directives
     }
 }
@@ -330,7 +330,7 @@ function schemaParser(typeDefs) {
                                 }
                                 obj.OperationId = fields.Name
                                 obj.DataType = fields.DataType
-                                obj.DataModel = fields.DataModel
+                                obj.DataSchema = fields.DataSchema
                                 obj = extendObjectValue(obj, "OperationId", obj.OperationId)
                                 obj.Parameters = convertToArrayWithNotation(fieldArguments.Arguments)
                                 rootObject.Servers[serverName].Paths[endpointPath].Operations.push(obj)

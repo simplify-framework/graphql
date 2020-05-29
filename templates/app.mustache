@@ -8,7 +8,7 @@ const typeDefs = gql(schema);
 {{#Servers}}
 {{#Paths}}
 {{#Operations}}
-{{#Function}}const {{Name}} = require('./StateMachine/{{Name}}'){{/Function}}
+{{#Function}}const {{Name}} = require('./States/{{Name}}'){{/Function}}
 {{/Operations}}
 {{/Paths}}
 {{/Servers}}
