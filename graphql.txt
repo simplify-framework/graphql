@@ -9,14 +9,14 @@
                 Function=addNewBook() onSuccess=doneNewBook() onFailure=errorNewBook() RetryOnFailure=
                 Function=doneNewBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
                 Function=errorNewBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
-        deleteBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=deleteBookFunction
+        deleteBook [title=String, author=AuthorInput] => NamedType(Book) will execute @GraphQLFunction=deleteBookFunction
     POST /book/user using COGNITO authorization with ApiKey=
-        readBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=readBookFunction
+        readBook [title=String, author=AuthorInput] => NamedType(Book) will execute @GraphQLFunction=readBookFunction
                 Method=checkBookPaid() onSuccess=readNewBook() onFailure=errorPaidBook() RetryOnFailure=
                 Method=readNewBook() onSuccess=doneReadBook() onFailure=DONE() RetryOnFailure=
                 Method=doneReadBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
                 Method=errorPaidBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
-        likeBook [title=String, author=AuthorInput] => ListType(Book) will execute @GraphQLFunction=listBookFunction
+        likeBook [title=String, author=AuthorInput] => NamedType(Book) will execute @GraphQLFunction=listBookFunction
 
 * Will execute Function=onBookSchedule on EVENT_RULE=scheduleOnBookEvent(every(10 mins)) => accessible to [Book] with Access=READ_ONLY
 * Will execute Function=onAuthorSchedule on TABLE_STORAGE=starwarsBookTable(UPDATE|CREATE) => accessible to [Author] with Access=READ_WRITE
@@ -24,19 +24,21 @@
 * [Book] persists on DataSource=TABLE_STORAGE@starwarsBookTable has Indexes=title:String,
 * [Author] persists on DataSource=BLOB_STORAGE@starwarsAuthorStorage has Indexes=name:String
 
-- [DataInput] GraphQLOptions { AuthMode=AuthorizationMode, AuthorizationId=String, ApiKey=Boolean, BurstLimit=Int, RateLimit=Int, QuotaLimit=Int, QuotaUnit=String  }
-- [DataInput] GraphQLDataIndex { Name=String, Type=String  }
-- [DataInput] FunctionInput { Name=String, Policy=String, Runtime=String, Template=String  }
-- [DataInput] ChainInput { Run=FunctionInput, Next=String, Other=String, Retry=Int  }
-* [DataInput] AuthorInput { name=String  }
+- [DataInput] GraphQLOptions { AuthMode=[object Object], AuthorizationId=[object Object], ApiKey=[object Object], BurstLimit=[object Object], RateLimit=[object Object], QuotaLimit=[object Object], QuotaUnit=[object Object]  }
+- [DataInput] GraphQLDataIndex { Name=[object Object], Type=[object Object]  }
+- [DataInput] FunctionInput { Name=[object Object], Mode=[object Object], Policy=[object Object], Runtime=[object Object], Template=[object Object]  }
+- [DataInput] ChainInput { Run=[object Object], Next=[object Object], Other=[object Object], Retry=[object Object]  }
+* [DataInput] AuthorInput { name=[object Object], type=[object Object]  }
 
 - [EnumObject] GraphQLEngineType { FARGATE, LAMBDA, KUBERNETES  }
-- [EnumObject] AuthorizationMode { SIGV4, COGNITO, NONE  }
+- [EnumObject] GraphQLAuthMode { SIGV4, COGNITO, NONE  }
+- [EnumObject] GraphQLExecutionMode { LOCAL, REMOTE  }
 - [EnumObject] GraphQLSourceType { TABLE_STORAGE, BLOB_STORAGE, EVENT_STREAM, NONE  }
 - [EnumObject] GraphQLEventType { EVENT_RULE, DATA_SOURCE, USER_EVENT  }
 - [EnumObject] GraphQLDataAccess { READ_ONLY, READ_WRITE, WRITE_ONLY, NONE  }
+* [EnumObject] AuthorType { ROMAN, SCIENTIST  }
 
-* [DataObject] Book { title=String, author=Author  }
-* [DataObject] Author { name=String  }
+* [DataObject] Book { title=[object Object], author=[object Object], comments=[object Object], outofstock=[object Object], types=[object Object]  }
+* [DataObject] Author { id=[object Object], name=[object Object], type=[object Object]  }
 - [DataObject] Query { listBooks (...) getBook (...)  }
 - [DataObject] Mutation { addBook (...) deleteBook (...) readBook (...) likeBook (...)  }

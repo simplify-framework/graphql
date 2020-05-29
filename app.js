@@ -4,33 +4,35 @@ const path = require('path')
 const { ApolloServer, gql } = require('apollo-server');
 const schema = fs.readFileSync(path.resolve(__dirname, 'graphql.schema'), 'utf8')
 const typeDefs = gql(schema);
-const Book = require('./DataModels/Book')
-const Author = require('./DataModels/Author')
+
+const listBookFunction = require('./StateMachine/listBookFunction')
+const getBookFunction = require('./StateMachine/getBookFunction')
+const addBookFunctionSet = require('./StateMachine/addBookFunctionSet')
+const deleteBookFunction = require('./StateMachine/deleteBookFunction')
+const readBookFunction = require('./StateMachine/readBookFunction')
+const listBookFunction = require('./StateMachine/listBookFunction')
 
 const resolvers = {
     Query: {
     // POST /query using NONE authorization with ApiKey=false
-        listBooks: () => new GraphQLFunction("listBookFunction"),
-        getBook: () => new GraphQLFunction("getBookFunction")
+        listBooks: (parent, args, context, info) => listBookFunction(parent, args, context, info),
+        getBook: (parent, args, context, info) => getBookFunction(parent, args, context, info)
     // END
     },
     Mutation: {
     // POST /book/admin using SIGV4 authorization with ApiKey=true
-        addBook: () => new GraphQLFunctionSet("addBookFunctionSet"),
-        deleteBook: () => new GraphQLFunction("deleteBookFunction")
+        addBook: (parent, args, context, info) => addBookFunctionSet(parent, args, context, info),
+        deleteBook: (parent, args, context, info) => deleteBookFunction(parent, args, context, info)
     ,
     // POST /book/user using COGNITO authorization with ApiKey=
-        readBook: () => new GraphQLFunction("readBookFunction"),
-        likeBook: () => new GraphQLFunction("listBookFunction")
+        readBook: (parent, args, context, info) => readBookFunction(parent, args, context, info),
+        likeBook: (parent, args, context, info) => listBookFunction(parent, args, context, info)
     // END
     }
 }
 
 const server = new ApolloServer({
-    typeDefs, resolvers, dataSources: () => ({
-        Book: () => new DataSource("TABLE_STORAGE", "starwarsBookTable", Book),
-        Author: () => new DataSource("BLOB_STORAGE", "starwarsAuthorStorage", Author)
-    })
+    typeDefs, resolvers
 })
 
 server.listen().then(({ url }) => {

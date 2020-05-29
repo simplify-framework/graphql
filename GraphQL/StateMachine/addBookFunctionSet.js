@@ -1,8 +1,11 @@
 'use strict';
 
-module.exports.addBookFunctionSet = () => new StateExecution([
-    { Run: "checkBookExisted", onSuccess: "addNewBook", onFailure: "doneNewBook", RetryOnFailure: 3 },
-    { Run: "addNewBook", onSuccess: "doneNewBook", onFailure: "errorNewBook" },
-    { Run: "doneNewBook", onSuccess: "DONE", onFailure: "DONE" },
-    { Run: "errorNewBook", onSuccess: "DONE", onFailure: "DONE" }
-])
+const { StateExecution } = require('../StateExecution')
+let Book = require('../Models/Book')
+
+module.exports.addBookFunctionSet = (parent, args, context, info) => new StateExecution().execute([
+    { Run: "checkBookExisted", Next: "addNewBook", Other: "doneNewBook", Retry: 3 },
+    { Run: "addNewBook", Next: "doneNewBook", Other: "errorNewBook" },
+    { Run: "doneNewBook", Next: "DONE", Other: "DONE" },
+    { Run: "errorNewBook", Next: "DONE", Other: "DONE" }
+], { parent, args, context, info }, "ListType", Book)

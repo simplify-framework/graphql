@@ -4,11 +4,14 @@ const path = require('path')
 const { ApolloServer, gql } = require('apollo-server');
 const schema = fs.readFileSync(path.resolve(__dirname, 'graphql.schema'), 'utf8')
 const typeDefs = gql(schema);
-{{#DataSources}}
-{{^isEmpty}}
-const {{Definition}} = require('./DataModels/{{Definition}}')
-{{/isEmpty}}
-{{/DataSources}}
+
+{{#Servers}}
+{{#Paths}}
+{{#Operations}}
+{{#Function}}const {{Name}} = require('./StateMachine/{{Name}}'){{/Function}}
+{{/Operations}}
+{{/Paths}}
+{{/Servers}}
 
 const resolvers = {
     {{#Servers}}
@@ -16,7 +19,7 @@ const resolvers = {
     {{#Paths}}
     // POST {{Path}} {{#Options}}using {{AuthMode}} authorization with ApiKey={{ApiKey}}{{/Options}}
     {{#Operations}}
-        {{OperationId}}: () => {{#Function}}new {{Kind}}("{{Name}}"){{/Function}}{{#hasMore}},{{/hasMore}}
+        {{OperationId}}: (parent, args, context, info) => {{#Function}}{{Name}}(parent, args, context, info){{/Function}}{{#hasMore}},{{/hasMore}}
     {{/Operations}}
     {{#hasMore}},{{/hasMore}}{{^hasMore}}// END{{/hasMore}}
     {{/Paths}}
@@ -25,13 +28,7 @@ const resolvers = {
 }
 
 const server = new ApolloServer({
-    typeDefs, resolvers, dataSources: () => ({
-        {{#DataSources}}
-        {{^isEmpty}}
-        {{Definition}}: () => new DataSource("{{{Type}}}", "{{Name}}", {{Definition}}){{#hasMore}},{{/hasMore}}
-        {{/isEmpty}}
-        {{/DataSources}}
-    })
+    typeDefs, resolvers
 })
 
 server.listen().then(({ url }) => {

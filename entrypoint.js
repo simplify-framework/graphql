@@ -60,21 +60,27 @@ function mainProcessor(typeDefs) {
         if (data.UserType) writeTemplateFile("templates/input.mustache", data, "./GraphQL/Inputs", `${data.Name}.js`)
     })
     rootObject.EnumObjects.map(data => {
-        if (data.UserType) writeTemplateFile("templates/enum.mustache", data, "./GraphQL/Enums", `${data.Name}.js`)
+        if (data.UserType) writeTemplateFile("templates/enum.mustache", data, "./GraphQL/Models", `${data.Name}.js`)
     })
     rootObject.Servers.map(server => {
         server.Paths.map(path => {
             path.Operations.map(operation => {
                 if (operation.Function.Kind == "GraphQLFunction") {
-                    writeTemplateFile("templates/state-function.mustache", operation.Function, "./GraphQL/StateMachine", `${operation.Function.Name}.js`)
+                    writeTemplateFile("templates/state-function.mustache", { ...operation.Function, DataType: operation.DataType, DataModel: operation.DataModel }, "./GraphQL/StateMachine", `${operation.Function.Name}.js`)
                 } else {
-                    writeTemplateFile("templates/state-functionset.mustache", operation.Function, "./GraphQL/StateMachine", `${operation.Function.Name}.js`)
+                    writeTemplateFile("templates/state-functionset.mustache", { ...operation.Function, DataType: operation.DataType, DataModel: operation.DataModel }, "./GraphQL/StateMachine", `${operation.Function.Name}.js`)
                 }
                 operation.Function.Chains && operation.Function.Chains.map(chain => {
+                    if (chain.Run.Mode == "REMOTE") {
+                        chain.RemoteExecutionMode = true
+                    }
                     writeTemplateFile("templates/function.mustache", chain, "./GraphQL/Functions", `${chain.Run.Name}.js`)
                     chain.Next !== "DONE" && writeTemplateFile("templates/function.mustache", chain, "./GraphQL/Functions", `${chain.Next}.js`)
                     chain.Other !== "DONE" && writeTemplateFile("templates/function.mustache", chain, "./GraphQL/Functions", `${chain.Other}.js`)
                 })
+                if (!operation.Function.Chains && operation.Function.Kind == "GraphQLFunction") {
+                    writeTemplateFile("templates/function.mustache", {}, "./GraphQL/Functions", `${operation.Function.Name}.js`)
+                }
             })
         })
     })

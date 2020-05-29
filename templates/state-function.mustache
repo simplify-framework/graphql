@@ -1,7 +1,13 @@
 'use strict';
 
-module.exports.{{Name}} = () => new FunctionExecution([
+const { StateExecution } = require('../StateExecution')
+let {{DataModel}} = require('../Models/{{DataModel}}')
+
+module.exports.{{Name}} = (parent, args, context, info) => new StateExecution().execute([
     {{#Chains}}
-    { Run: {{#Run}}"{{Name}}"{{/Run}}, onSuccess: "{{Next}}", onFailure: "{{Other}}"{{#Retry}}, RetryOnFailure: {{Retry}}{{/Retry}} }{{#hasMore}},{{/hasMore}}
+    { Run: {{#Run}}"{{Name}}"{{/Run}}, Next: "{{Next}}", Other: "{{Other}}"{{#Retry}}, Retry: {{Retry}}{{/Retry}} }{{#hasMore}},{{/hasMore}}
     {{/Chains}}
-])
+    {{^Chains}}
+    { Run: "{{Name}}", Next: "DONE", Other: "DONE" }
+    {{/Chains}}
+], { parent, args, context, info }, "{{DataType}}", {{DataModel}})

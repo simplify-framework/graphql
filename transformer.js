@@ -1,5 +1,6 @@
 'use strict';
-
+const uuid = require('uuid/v4')
+const crypto = require("crypto")
 
 String.prototype.toTextSpace = function () {
     return this.replace(/([A-Z])/g, (match) => ` ${match}`)
@@ -41,7 +42,7 @@ function convertToArrayWithNotation(arrayOrObject, debug) {
         arrayOrObject.isEmpty = false;
         for (let i = 0; i < arrayOrObject.length; i++) {
             if (typeof (arrayOrObject[i]) === 'string') {
-                arrayOrObject[i] = { value: arrayOrObject[i] }
+                arrayOrObject[i] = { Value: arrayOrObject[i] }
             } if (Array.isArray(arrayOrObject[i])) {
                 console.log(arrayOrObject[i])
             }
@@ -115,16 +116,28 @@ function objectValueParse(obj) {
     return result
 }
 
+function parseObjectType(obj, name, def) {
+    if (obj === "List" || obj === "String" || obj === "ID" || obj === "Boolean" ||  obj === "Int" || obj === "Float") {
+        obj = { Name: name, Value: obj, isScalarType: true }
+        obj = generateRandomValue(obj)
+    } else {
+        obj = { Name: name, Value: obj, isObjectType: true }
+    }
+    return obj
+}
+
 function objectFieldParse(obj, name) {
     let result = {}
     if (obj.kind === "InputObjectTypeDefinition" || obj.kind === "ObjectTypeDefinition") {
         obj.fields.map(fobj => {
             if (!Array.isArray(result)) result = []
-            result.push({ Type: name, Name: fobj.name.value, Value: objectFieldParse(fobj.type) })
+            result.push({ Type: name, Name: fobj.name.value, Value: objectFieldParse(fobj.type, fobj.name.value) })
         })
         result = convertToArrayWithNotation(result)
+    } else if (obj.kind === "ListType") {
+        result = generateRandomValue({ Name: name, Value: obj.type.name.value, isListType: true })
     } else if (obj.kind === "NamedType") {
-        result = obj.name.value
+        result = parseObjectType(obj.name.value, name, obj)
     } else if (obj.kind === "NonNullType") {
         result = objectFieldParse(obj.type)
     } else if (obj.kind === "InputValueDefinition") {
@@ -134,7 +147,7 @@ function objectFieldParse(obj, name) {
     } else if (obj.kind === "EnumTypeDefinition") {
         obj.values.map(fobj => {
             if (!Array.isArray(result)) result = []
-            result.push({ Type: name, Name: fobj.name.type, Value: objectFieldParse(fobj.name) })
+            result.push({ Type: name, Name: fobj.name.type, Value: objectFieldParse(fobj.name, fobj.name.value) })
         })
         result = convertToArrayWithNotation(result)
     } else if (obj.kind === "EnumValueDefinition") {
@@ -142,6 +155,7 @@ function objectFieldParse(obj, name) {
     } else {
         result = obj.value
     }
+    
     return result || undefined
 }
 
@@ -204,6 +218,37 @@ function fieldArgumentParser(field) {
         Name: field.name.value,
         Arguments: farguments
     }
+}
+
+function generateRandomValue(obj) {
+    function randomInteger(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    function randomNumber(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+    if (obj.isListType) {
+        if (obj.Value == "String") {
+            obj.Default = convertToArrayWithNotation([ crypto.randomBytes(8).toString("hex"), crypto.randomBytes(8).toString("hex"), crypto.randomBytes(8).toString("hex") ])
+            obj.isListStringType = true
+        } else {
+            obj.Default = convertToArrayWithNotation([obj.Value])
+            obj.isListStringType = false
+        }
+    } else if (obj.Value === "String") {
+        obj.Default = crypto.randomBytes(8).toString("hex")
+        obj.isStringType = true
+    } else if (obj.Value === "ID") {
+        obj.Default = uuid()
+        obj.isStringType = true
+    } else if (obj.Value === "Boolean" || obj.Value === "Bool") {
+        obj.Default = Math.random() >= 0.5
+    } else if (obj.Value === "Int") {
+        obj.Default = randomInteger(0, 9999)
+    } else if (obj.Value === "Float") {
+        obj.Default = randomNumber(0, 9999)
+    }
+    return obj
 }
 
 function schemaParser(typeDefs) {
@@ -351,7 +396,7 @@ function hoganFlatter(rootObject) {
 
     rootObject.EnumObjects = Object.keys(rootObject.EnumObjects).map(kenum => {
         return {
-            UserType: ["GraphQLEngineType", "AuthorizationMode", "GraphQLSourceType", "GraphQLEventType", "GraphQLDataAccess"].indexOf(kenum) === -1,
+            UserType: ["GraphQLEngineType", "GraphQLAuthMode", "GraphQLExecutionMode", "GraphQLSourceType", "GraphQLEventType", "GraphQLDataAccess"].indexOf(kenum) === -1,
             Name: kenum,
             Type: "EnumObject",
             Value: rootObject.EnumObjects[kenum]

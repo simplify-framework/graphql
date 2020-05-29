@@ -1,11 +1,12 @@
 enum GraphQLEngineType { FARGATE LAMBDA KUBERNETES }
-enum AuthorizationMode { SIGV4 COGNITO NONE }
+enum GraphQLAuthMode { SIGV4 COGNITO NONE }
+enum GraphQLExecutionMode { LOCAL REMOTE }
 enum GraphQLSourceType { TABLE_STORAGE BLOB_STORAGE EVENT_STREAM NONE }
 enum GraphQLEventType { EVENT_RULE DATA_SOURCE USER_EVENT }
 enum GraphQLDataAccess { READ_ONLY READ_WRITE WRITE_ONLY NONE }
 
 input GraphQLOptions { 
-    AuthMode: AuthorizationMode
+    AuthMode: GraphQLAuthMode
     AuthorizationId: String
     ApiKey: Boolean
     BurstLimit: Int
@@ -21,6 +22,7 @@ input GraphQLDataIndex {
 
 input FunctionInput {
     Name: String
+    Mode: GraphQLExecutionMode
     Policy: String
     Runtime: String
     Template: String
@@ -85,8 +87,12 @@ type Book
     ) {
     title: String
     author: Author!
+    comments: [String]
+    outofstock: Boolean
+    types: [AuthorType]
 }
 
+enum AuthorType { ROMAN SCIENTIST }
 type Author
     @GraphQLDataSource(Type: BLOB_STORAGE Name: "starwarsAuthorStorage" Indexes: [{ Name: "name", Type: "String" }])
     @GraphQLEvent(
@@ -96,11 +102,14 @@ type Author
         Value: "UPDATE|CREATE"
         Access: READ_WRITE
     ) {
+    id: ID!
     name: String!
+    type: AuthorType
 }
 
 input AuthorInput {
     name: String!
+    type: AuthorType
 }
 
 # The "Query" type is special: it lists all of the available queries that
@@ -121,23 +130,23 @@ type Mutation
     addBook(title: String, author: AuthorInput): [Book]
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 ApiKey: true })
         @GraphQLFunctionSet(Name: "addBookFunctionSet", Chains: [
-            { Run: { Name: "checkBookExisted" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
-            { Run: { Name: "addNewBook" }, Next: "doneNewBook", Other: "errorNewBook"  }
-            { Run: { Name: "doneNewBook" }, Next: "DONE", Other: "DONE"  }
-            { Run: { Name: "errorNewBook" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "checkBookExisted", Mode: "LOCAL" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
+            { Run: { Name: "addNewBook", Mode: "LOCAL" }, Next: "doneNewBook", Other: "errorNewBook"  }
+            { Run: { Name: "doneNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "errorNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
         ])
-    deleteBook(title: String, author: AuthorInput): [Book]
+    deleteBook(title: String, author: AuthorInput): Book
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 ApiKey: true })
         @GraphQLFunction(Name: "deleteBookFunction")
-    readBook(title: String, author: AuthorInput): [Book]
+    readBook(title: String, author: AuthorInput): Book
         @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
         @GraphQLFunction(Name: "readBookFunction", Chains: [
-            { Run: { Name: "checkBookPaid" }, Next: "readNewBook", Other: "errorPaidBook" }
-            { Run: { Name: "readNewBook" }, Next: "doneReadBook", Other: "DONE"  }
-            { Run: { Name: "doneReadBook" }, Next: "DONE", Other: "DONE"  }
-            { Run: { Name: "errorPaidBook" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "checkBookPaid", Mode: "LOCAL" }, Next: "readNewBook", Other: "errorPaidBook" }
+            { Run: { Name: "readNewBook", Mode: "LOCAL" }, Next: "doneReadBook", Other: "DONE"  }
+            { Run: { Name: "doneReadBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "errorPaidBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
         ])
-    likeBook(title: String, author: AuthorInput): [Book]
+    likeBook(title: String, author: AuthorInput): Book
         @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
         @GraphQLFunction(Name: "listBookFunction")
 }

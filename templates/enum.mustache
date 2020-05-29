@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports.{{Name}} = [ {{#Value}}"{{Value}}"{{#hasMore}},{{/hasMore}} {{/Value}} ]
+module.exports.{{Name}} = (context)=> { return [ {{#Value}}"{{Value}}"{{#hasMore}},{{/hasMore}} {{/Value}} ][context.Index || 0] }
