@@ -1,12 +1,12 @@
 'use strict';
 {{#Value}}
-{{#Value}}{{#isListType}}{{#Default}}{{#-first}}{{^isListStringType}}const {{Value}} = require('./{{Value}}'){{/isListStringType}}{{/-first}}{{/Default}}{{/isListType}}{{^isListType}}{{#isObjectType}}const {{Value}} = require('./{{Value}}'){{/isObjectType}}{{/isListType}}{{/Value}}
+{{#Value}}{{#isListType}}{{#Default}}{{#-first}}{{^isListStringType}}const { {{Value}} } = require('./{{Value}}'){{/isListStringType}}{{/-first}}{{/Default}}{{/isListType}}{{^isListType}}{{#isObjectType}}const { {{Value}} } = require('./{{Value}}'){{/isObjectType}}{{/isListType}}{{/Value}}
 {{/Value}}
 
 module.exports.{{Name}} = (context)=> {
     return {
         {{#Value}}
-        {{Name}}: {{#Value}}{{#isListType}}[ {{#Default}}{{#isListStringType}}"{{Value}}"{{/isListStringType}}{{^isListStringType}}{{Value}}(context){{/isListStringType}}{{#hasMore}},{{/hasMore}}{{/Default}} ]{{/isListType}}{{^isListType}}{{#isObjectType}}{{Value}}(context){{/isObjectType}}{{^isObjectType}}{{#isStringType}}"{{Default}}"{{/isStringType}}{{^isStringType}}{{Default}}{{/isStringType}}{{/isObjectType}}{{/isListType}}{{/Value}}{{#hasMore}},{{/hasMore}}
+        {{Name}}: {{#Value}}{{#isListType}}[ {{#isListStringType}}"{{Value}}"{{/isListStringType}}{{^isListStringType}}{{Value}}(context){{/isListStringType}} ]{{/isListType}}{{^isListType}}{{#isObjectType}}{{Value}}(context){{/isObjectType}}{{^isObjectType}}"{{Value}}"{{/isObjectType}}{{/isListType}}{{/Value}}{{#hasMore}},{{/hasMore}}
         {{/Value}}
     }
 }
