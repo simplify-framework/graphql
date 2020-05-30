@@ -54,6 +54,7 @@ function runCommandLine() {
         projectInfo.ProjectId = projectInfo.ProjectId || argv.project
         projectInfo.AccountId = projectInfo.AccountId || argv.account
         projectInfo = extendObjectValue(projectInfo, "ProjectName", projectInfo.ProjectName)
+        projectInfo = extendObjectValue(projectInfo, "DeploymentStage", projectInfo.DeploymentStage)
         const typeDefs = gql(schema);
         mainProcessor(typeDefs, schema, projectInfo)
     } catch (err) {
