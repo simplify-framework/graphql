@@ -53,6 +53,7 @@ function runCommandLine() {
         projectInfo.ProjectOutput = projectInfo.ProjectOutput || argv.output
         projectInfo.ProjectId = projectInfo.ProjectId || argv.project
         projectInfo.AccountId = projectInfo.AccountId || argv.account
+        projectInfo.GeneratorVersion = require('./package.json').version
         projectInfo = extendObjectValue(projectInfo, "ProjectName", projectInfo.ProjectName)
         projectInfo = extendObjectValue(projectInfo, "DeploymentStage", projectInfo.DeploymentStage)
         const typeDefs = gql(schema);
