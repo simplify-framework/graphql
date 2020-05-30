@@ -43,8 +43,6 @@ function convertToArrayWithNotation(arrayOrObject, debug) {
         for (let i = 0; i < arrayOrObject.length; i++) {
             if (typeof (arrayOrObject[i]) === 'string') {
                 arrayOrObject[i] = { Value: arrayOrObject[i] }
-            } if (Array.isArray(arrayOrObject[i])) {
-                console.log(arrayOrObject[i])
             }
             arrayOrObject[i]['-first'] = (i === 0);
             arrayOrObject[i]['-last'] = (i === arrayOrObject.length - 1);
@@ -284,6 +282,23 @@ function schemaParser(typeDefs) {
                     if (!rootObject.Servers[serverName]) {
                         obj = extendObjectValue(obj, "Name", obj.Name)
                         rootObject.Servers[serverName] = obj
+                        if (!obj.Options) obj.Options = {}
+                        obj.Runtime = obj.Runtime || 'nodejs12.x'
+                        if (obj.Runtime.startsWith('python')) {
+                            obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { \'statusCode\': 200, \'body'\: \'{}\' }`
+                        } else if (obj.Runtime.startsWith('nodej')) {
+                            obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { statusCode: 200, body: JSON.stringify({}) })}`
+                        } else {
+                            console.error(` - Gateway Runtime ${obj.Runtime} is not supported!`)
+                            process.exit(255)
+                        }
+                        obj.Options.BurstLimit = obj.Options.BurstLimit || 100
+                        obj.Options.RateLimit = obj.Options.RateLimit || 10
+                        obj.Options.QuotaLimit = obj.Options.QuotaLimit || 100
+                        obj.Options.QuotaUnit = obj.Options.QuotaUnit || 'DAY'
+                        rootObject.Servers[serverName].Definitions = [ { Definition: obj.Definition } ]
+                    } else {
+                        rootObject.Servers[serverName].Definitions.push({ Definition: obj.Definition })
                     }
                 } else if (obj.Kind === "GraphQLEvent") {
                     eventName = eventName !== obj.Name ? obj.Name : eventName
@@ -303,14 +318,15 @@ function schemaParser(typeDefs) {
                         process.exit(-1)
                     }
                 } else if (obj.Kind === "GraphQLFunction") {
+                    const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == obj.Definition)
                     rootObject.Servers[serverName].Function = obj
-                    if (!rootObject.Servers[serverName].Paths) {
-                        rootObject.Servers[serverName].Paths = {}
+                    if (!serverDef.Paths) {
+                        serverDef.Paths = {}
                     }
-                    if (!rootObject.Servers[serverName].Paths[endpointPath]) {
-                        rootObject.Servers[serverName].Paths[endpointPath] = { Operations: [] }
+                    if (!serverDef.Paths[endpointPath]) {
+                        serverDef.Paths[endpointPath] = { Operations: [] }
                     }
-                    rootObject.Servers[serverName].Paths[endpointPath].Operations.push(obj)
+                    serverDef.Paths[endpointPath].Operations.push(obj)
                 }
             })
             if (def.name.value === "Mutation" || def.name.value === "Query") {
@@ -322,27 +338,33 @@ function schemaParser(typeDefs) {
                         fields.Directives.map(obj => {
                             if (obj.Kind === "GraphQLEndpoint") {
                                 endpointPath = obj.Path || '/'
-                                if (!rootObject.Servers[serverName].Paths) {
-                                    rootObject.Servers[serverName].Paths = {}
+                                const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == def.name.value)
+                                if (!serverDef.Paths) {
+                                    serverDef.Paths = {}
                                 }
-                                if (!rootObject.Servers[serverName].Paths[endpointPath]) {
-                                    rootObject.Servers[serverName].Paths[endpointPath] = { Operations: [], Path: endpointPath }
+                                if (!serverDef.Paths[endpointPath]) {
+                                    serverDef.Paths[endpointPath] = { Operations: [], Path: endpointPath }
                                 }
                                 obj.OperationId = fields.Name
                                 obj.DataType = fields.DataType
                                 obj.DataSchema = fields.DataSchema
+                                if (!obj.Options) obj.Options = {}
+                                obj.Options.ApiKey = obj.Options.ApiKey || false
+                                if (obj.Options.AuthMode === "SIGV4") obj.Options.HasSigv4 = true
+                                if (obj.Options.AuthMode === "COGNITO") obj.Options.HasAuthorizer = true
                                 obj = extendObjectValue(obj, "OperationId", obj.OperationId)
                                 obj.Parameters = convertToArrayWithNotation(fieldArguments.Arguments)
-                                rootObject.Servers[serverName].Paths[endpointPath].Operations.push(obj)
-                                rootObject.Servers[serverName].Paths[endpointPath].Options = obj.Options
+                                serverDef.Paths[endpointPath].Operations.push(obj)
+                                serverDef.Paths[endpointPath].Options = obj.Options
                             } else if (obj.Kind === "GraphQLFunction" || obj.Kind === "GraphQLFunctionSet") {
-                                if (!rootObject.Servers[serverName].Paths) {
-                                    rootObject.Servers[serverName].Paths = {}
+                                const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == def.name.value)
+                                if (!serverDef.Paths) {
+                                    serverDef.Paths = {}
                                 }
-                                if (!rootObject.Servers[serverName].Paths[endpointPath]) {
-                                    rootObject.Servers[serverName].Paths[endpointPath] = { Operations: [], Path: endpointPath }
+                                if (!serverDef.Paths[endpointPath]) {
+                                    serverDef.Paths[endpointPath] = { Operations: [], Path: endpointPath }
                                 }
-                                const operation = rootObject.Servers[serverName].Paths[endpointPath].Operations.find(o => o.OperationId === fields.Name)
+                                const operation = serverDef.Paths[endpointPath].Operations.find(o => o.OperationId === fields.Name)
                                 if (operation) {
                                     obj.FunctionType = obj.Kind === "GraphQLFunction" ? "Method" : "Function"
                                     operation.Function = obj
@@ -354,8 +376,8 @@ function schemaParser(typeDefs) {
                         })
                     }
                 })
+                rootObject.Servers[serverName].Definitions = convertToArrayWithNotation(rootObject.Servers[serverName].Definitions) 
             }
-
         }
     })
     return rootObject
@@ -364,11 +386,14 @@ function schemaParser(typeDefs) {
 function hoganFlatter(rootObject) { 
     rootObject.Servers = convertToArrayWithNotation(rootObject.Servers)
     rootObject.Servers = rootObject.Servers.map(server => {
-        let pathsArray = convertToArrayWithNotation(server.Paths)
-        pathsArray = pathsArray.map(path => {
-            return { ...path, Operations: convertToArrayWithNotation(path.Operations) }
+        server.Definitions = server.Definitions.map(serverDef => {
+            let pathsArray = convertToArrayWithNotation(serverDef.Paths)
+            pathsArray = pathsArray.map(path => {
+                return { ...path, Operations: convertToArrayWithNotation(path.Operations) }
+            })
+            return { ...serverDef, Paths: convertToArrayWithNotation(pathsArray) }
         })
-        return { ...server, Paths: convertToArrayWithNotation(pathsArray) }
+        return { ...server, Definitions: server.Definitions }
     })
     rootObject.Servers = convertToArrayWithNotation(rootObject.Servers)
 
@@ -386,7 +411,7 @@ function hoganFlatter(rootObject) {
 
     rootObject.DataInputs = Object.keys(rootObject.DataInputs).map(kinput => {
         return {
-            UserType: ["GraphQLOptions", "GraphQLDataIndex", "FunctionInput", "ChainInput"].indexOf(kinput) === -1,
+            UserType: ["GraphQLServerOptions", "GraphQLEndpointOptions", "GraphQLDataIndex", "FunctionInput", "ChainInput"].indexOf(kinput) === -1,
             Name: kinput,
             Type: "DataInput",
             Value: rootObject.DataInputs[kinput]
@@ -409,5 +434,6 @@ function hoganFlatter(rootObject) {
 
 module.exports = {
     hoganFlatter: hoganFlatter,
-    schemaParser: schemaParser
+    schemaParser: schemaParser,
+    extendObjectValue: extendObjectValue
 }

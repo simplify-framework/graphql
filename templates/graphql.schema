@@ -1,0 +1,63 @@
+# Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
+# This "Book" type defines the queryable fields for every book in our data source.
+enum AuthorType { JOURNALIST SCIENTIST }
+
+type Book
+{
+    title: String
+    author: Author!
+    comments: [String]
+    outofstock: Boolean
+    types: [AuthorType]
+}
+
+type Author
+{
+    id: ID!
+    name: String!
+    type: AuthorType
+}
+
+input AuthorInput {
+    name: String!
+    type: AuthorType
+}
+
+# The "Query" type is special: it lists all of the available queries that
+# clients can execute, along with the return type for each. In this
+# case, the "books" query returns an array of zero or more Books (defined above).
+type Query
+    @GraphQLServer(Name: "StarwarServerQuery", Engine: LAMBDA) {
+    listBooks: [Book]
+        @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE HasApiKey: false })
+        @GraphQLFunction(Name: "listBookFunction")
+    getBook(title: String): Book
+        @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE HasApiKey: false })
+        @GraphQLFunction(Name: "getBookFunction")
+}
+
+type Mutation
+    @GraphQLServer(Name: "StarwarServerMutation", Engine: LAMBDA, Options: { BurstLimit: 100 RateLimit: 10 }) {
+    addBook(title: String, author: AuthorInput): [Book]
+        @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 HasApiKey: true })
+        @GraphQLFunctionSet(Name: "addBookFunctionSet", Chains: [
+            { Run: { Name: "checkBookExisted", Mode: "LOCAL" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
+            { Run: { Name: "addNewBook", Mode: "LOCAL" }, Next: "doneNewBook", Other: "errorNewBook"  }
+            { Run: { Name: "doneNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "errorNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+        ])
+    deleteBook(title: String, author: AuthorInput): Book
+        @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 HasApiKey: true })
+        @GraphQLFunction(Name: "deleteBookFunction")
+    readBook(title: String, author: AuthorInput): Book
+        @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
+        @GraphQLFunction(Name: "readBookFunction", Chains: [
+            { Run: { Name: "checkBookPaid", Mode: "LOCAL" }, Next: "readNewBook", Other: "errorPaidBook" }
+            { Run: { Name: "readNewBook", Mode: "LOCAL" }, Next: "doneReadBook", Other: "DONE"  }
+            { Run: { Name: "doneReadBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "errorPaidBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+        ])
+    likeBook(title: String, author: AuthorInput): Book
+        @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
+        @GraphQLFunction(Name: "likeBookFunction")
+}

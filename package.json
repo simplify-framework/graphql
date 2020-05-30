@@ -7,7 +7,8 @@
     "simplify-graphql": "entrypoint.js"
   },
   "scripts": {
-    "start": "node entrypoint.js -i graphql.schema"
+    "build": "node entrypoint.js -i graphql.schema",
+    "start": "node GraphQL/app"
   },
   "repository": {
     "type": "git",
@@ -26,7 +27,8 @@
   },
   "homepage": "https://github.com/simplify-framework/graphql#README",
   "dependencies": {
-    "apollo-server": "^2.13.1",
+    "simplify-templates": "^0.1.1",
+    "graphql-tag": "^2.10.3",
     "graphql": "^15.0.0",
     "hogan.js": "^3.0.2",
     "mkdirp": "^1.0.4",

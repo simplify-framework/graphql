@@ -1,0 +1,10 @@
+{
+    "ProjectName": "StarWarBook",
+    "ProjectId": "95448430",
+    "HasKeyVault": false,
+    "BucketName": "starwar-book-deployment",
+    "DeploymentStage": "Dev-052020",
+    "DeploymentRegion": "eu-west-1",
+    "DeploymentProfile": "simplify-eu",
+    "DeploymentApiKey": "41f45a5450dff588b598903e95df4af3a256cea9"
+}
