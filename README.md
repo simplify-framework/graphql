@@ -17,7 +17,7 @@
     - What is your Deployment Bucket? (starwars-deployment-eu-west-1): 
     - What is your Deployment Region? (eu-west-1): 
     - What is your Deployment Profile? (simplify-eu): 
-    - What is your AWS Account Id? your_aws_account_id_here
+    - What is your AWS Account Id? [your_aws_account_id_here]
     - Do you want to use Secret Manager as KeyVault? [y/n]: n
     - What is your Endpoint ApiKey? (db3349f149ba09049a9128b09255a6f0888c64c7): 
 
