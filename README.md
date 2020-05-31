@@ -7,6 +7,20 @@
 - `npm install -g simplify-graphql`
 - `simplify-graphql -i schema.graphql`
 
+> It will help you to create your project step by step...
+
+    * GraphQL Schema 'schema.graphql' is not found.
+    - Do you want to generate a schema sample? [y/n]: y
+    - What is your Project name? starwars
+    - What is your Project description? This is a starwars III program
+    - What is your Project Id? (f8e01fcde7b236cb): 
+    - What is your Deployment Bucket? (starwars-deployment-eu-west-1): 
+    - What is your Deployment Region? (eu-west-1): 
+    - What is your Deployment Profile? (simplify-eu): 
+    - What is your AWS Account Id? your_aws_account_id_here
+    - Do you want to use Secret Manager as KeyVault? [y/n]: n
+    - What is your Endpoint ApiKey? (db3349f149ba09049a9128b09255a6f0888c64c7): 
+
 ## HOW TO: Test your GraphQL API server
 ```JavaScript
 const Queries = `
