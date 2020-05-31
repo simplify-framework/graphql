@@ -3,11 +3,11 @@
     "ProjectVersion": "0.1.0",
     "ProjectDesc": "StarWars Book Project",
     "ProjectId": "95448430",
-    "HasKeyVault": false,
-    "BucketName": "starwar-book-deployment",
-    "DeploymentStage": "Dev-052020",
+    "DeploymentKeyVault": false,
+    "DeploymentBucket": "starwar-book-deployment",
+    "DeploymentStage": "31052020",
     "DeploymentRegion": "eu-west-1",
-    "DeploymentProfile": "simplify-eu",
+    "DeploymentProfile": "starwars-eu",
     "DeploymentAccount": "aws-account-id",
     "DeploymentApiKey": "41f45a5450dff588b598903e95df4af3a256cea9"
 }

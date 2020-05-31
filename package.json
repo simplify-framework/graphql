@@ -27,11 +27,13 @@
   },
   "homepage": "https://github.com/simplify-framework/graphql#README",
   "dependencies": {
-    "simplify-templates": "^0.1.1",
+    "diff": "^4.0.2",
+    "graphql": "^14.0.0",
     "graphql-tag": "^2.10.3",
-    "graphql": "^15.0.0",
     "hogan.js": "^3.0.2",
     "mkdirp": "^1.0.4",
+    "readline-sync": "^1.4.10",
+    "simplify-templates": "^0.1.1",
     "uuid": "^8.1.0"
   }
 }

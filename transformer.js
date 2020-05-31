@@ -286,8 +286,10 @@ function schemaParser(typeDefs) {
                         obj.Runtime = obj.Runtime || 'nodejs12.x'
                         if (obj.Runtime.startsWith('python')) {
                             obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { \'statusCode\': 200, \'body'\: \'{}\' }`
+                            obj.Language = 'py'
                         } else if (obj.Runtime.startsWith('nodej')) {
                             obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { statusCode: 200, body: JSON.stringify({}) })}`
+                            obj.Language = 'js'
                         } else {
                             console.error(` - Gateway Runtime ${obj.Runtime} is not supported!`)
                             process.exit(255)
@@ -317,16 +319,16 @@ function schemaParser(typeDefs) {
                         console.error(` * Duplicate DataSource: \`${dataSourceName}\` on ${defs.Name.toUpperCase()}`)
                         process.exit(-1)
                     }
-                } else if (obj.Kind === "GraphQLFunction") {
+                } else if (obj.Kind === "GraphQLResolver") {
                     const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == obj.Definition)
-                    rootObject.Servers[serverName].Function = obj
+                    rootObject.Servers[serverName].Resolver = obj
                     if (!serverDef.Paths) {
                         serverDef.Paths = {}
                     }
                     if (!serverDef.Paths[endpointPath]) {
-                        serverDef.Paths[endpointPath] = { Operations: [] }
+                        serverDef.Paths[endpointPath] = { Resolvers: [] }
                     }
-                    serverDef.Paths[endpointPath].Operations.push(obj)
+                    serverDef.Paths[endpointPath].Resolvers.push(obj)
                 }
             })
             if (def.name.value === "Mutation" || def.name.value === "Query") {
@@ -343,7 +345,7 @@ function schemaParser(typeDefs) {
                                     serverDef.Paths = {}
                                 }
                                 if (!serverDef.Paths[endpointPath]) {
-                                    serverDef.Paths[endpointPath] = { Operations: [], Path: endpointPath }
+                                    serverDef.Paths[endpointPath] = { Resolvers: [], Path: endpointPath }
                                 }
                                 obj.OperationId = fields.Name
                                 obj.DataType = fields.DataType
@@ -354,23 +356,23 @@ function schemaParser(typeDefs) {
                                 if (obj.Options.AuthMode === "COGNITO") obj.Options.HasAuthorizer = true
                                 obj = extendObjectValue(obj, "OperationId", obj.OperationId)
                                 obj.Parameters = convertToArrayWithNotation(fieldArguments.Arguments)
-                                serverDef.Paths[endpointPath].Operations.push(obj)
+                                serverDef.Paths[endpointPath].Resolvers.push(obj)
                                 serverDef.Paths[endpointPath].Options = obj.Options
-                            } else if (obj.Kind === "GraphQLFunction" || obj.Kind === "GraphQLFunctionSet") {
+                            } else if (obj.Kind === "GraphQLResolver" || obj.Kind === "GraphQLResolverSet") {
                                 const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == def.name.value)
                                 if (!serverDef.Paths) {
                                     serverDef.Paths = {}
                                 }
                                 if (!serverDef.Paths[endpointPath]) {
-                                    serverDef.Paths[endpointPath] = { Operations: [], Path: endpointPath }
+                                    serverDef.Paths[endpointPath] = { Resolvers: [], Path: endpointPath }
                                 }
-                                const operation = serverDef.Paths[endpointPath].Operations.find(o => o.OperationId === fields.Name)
-                                if (operation) {
-                                    obj.FunctionType = obj.Kind === "GraphQLFunction" ? "Method" : "Function"
-                                    operation.Function = obj
-                                    if (operation.Function.Chains)
-                                        operation.Function.Chains = convertToArrayWithNotation(operation.Function.Chains)
-                                    operation.Function = extendObjectValue(operation.Function, "Name", obj.Name)
+                                const resolver = serverDef.Paths[endpointPath].Resolvers.find(o => o.OperationId === fields.Name)
+                                if (resolver) {
+                                    obj.ResolverType = obj.Kind === "GraphQLResolver" ? "Method" : "Function"
+                                    resolver.Resolver = obj
+                                    if (resolver.Resolver.Chains)
+                                        resolver.Resolver.Chains = convertToArrayWithNotation(resolver.Resolver.Chains)
+                                    resolver.Resolver = extendObjectValue(resolver.Resolver, "Name", obj.Name)
                                 }
                             }
                         })
@@ -389,7 +391,7 @@ function hoganFlatter(rootObject) {
         server.Definitions = server.Definitions.map(serverDef => {
             let pathsArray = convertToArrayWithNotation(serverDef.Paths)
             pathsArray = pathsArray.map(path => {
-                return { ...path, Operations: convertToArrayWithNotation(path.Operations) }
+                return { ...path, Resolvers: convertToArrayWithNotation(path.Resolvers) }
             })
             return { ...serverDef, Paths: convertToArrayWithNotation(pathsArray) }
         })
