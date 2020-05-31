@@ -9,17 +9,34 @@
 
 > It will help you to create your project step by step...
 
-    * GraphQL Schema 'schema.graphql' is not found.
-    - Do you want to generate a schema sample? [y/n]: y
+    ╓───────────────────────────────────────────────────────────────╖
+    ║               Simplify Framework  - GraphQL                   ║
+    ╙───────────────────────────────────────────────────────────────╜
+    - Automatic code merge is off (use option --merge to turn on)
+    - Diff file generation is off (use option --diff to turn on)
+
     - What is your Project name? starwars
-    - What is your Project description? This is a starwars III program
-    - What is your Project Id? (f8e01fcde7b236cb): 
-    - What is your Deployment Bucket? (starwars-deployment-eu-west-1): 
-    - What is your Deployment Region? (eu-west-1): 
-    - What is your Deployment Profile? (simplify-eu): 
-    - What is your AWS Account Id? [your_aws_account_id_here]
+    - What is your Project description? This is a new starwars III
+    - What is your Project Id? (aa405d57a6f189b2): [Enter]
+    - Choose your Deployment Bucket? (starwars-deployment-eu-west-1): 
+    - Choose your Deployment Region? (eu-west-1): [Enter]
+    - Create new Deployment Profile? (simplify-eu): [Enter]
+    - What is your AWS Account Id? **your_aws_account_id**
     - Do you want to use Secret Manager as KeyVault? [y/n]: n
-    - What is your Endpoint ApiKey? (db3349f149ba09049a9128b09255a6f0888c64c7): 
+    - What is your Endpoint ApiKey? (a4d0c3836b6ab16ece5cabf1887128ff6bddf962): [Enter]
+    - Finish code generation with NO error. See current folder for your code!
+
+    * Follow these commands to walk throught your project: (starwars)
+
+    1. Setup AWS Account   : bash .simplify-graphql/aws-setup.sh 
+    2. Goto Project Dir    : cd ./ 
+    3. Install Packages    : npm install 
+    4. Deploy AWS Stacks   : npm run stack-deploy 
+    5. Push Code Functions : npm run push-code 
+    6. Update Environments : npm run push-update 
+    7. Test Your Functions : npm run test 
+    8. Destroy AWS Stacks  : npm run stack-destroy 
+    9. Cleanup AWS Account : bash .simplify-graphql/aws-cleanup.sh 
 
 ## HOW TO: Test your GraphQL API server
 ```JavaScript

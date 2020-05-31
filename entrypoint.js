@@ -183,15 +183,15 @@ function runCommandLine() {
             projectInfo.ProjectId = projectInfo.ProjectId || randomValue
         }
         if (!projectInfo.DeploymentBucket) {
-            projectInfo.DeploymentBucket = readlineSync.question(` - ${CPROMPT}What is your Deployment Bucket?${CRESET} (starwars-deployment-eu-west-1): `)
+            projectInfo.DeploymentBucket = readlineSync.question(` - ${CPROMPT}Choose your Deployment Bucket?${CRESET} (starwars-deployment-eu-west-1): `)
             projectInfo.DeploymentBucket = projectInfo.DeploymentBucket || 'starwars-deployment-eu-west-1'
         }
         if (!projectInfo.DeploymentRegion) {
-            projectInfo.DeploymentRegion = readlineSync.question(` - ${CPROMPT}What is your Deployment Region?${CRESET} (eu-west-1): `)
+            projectInfo.DeploymentRegion = readlineSync.question(` - ${CPROMPT}Choose your Deployment Region?${CRESET} (eu-west-1): `)
             projectInfo.DeploymentRegion = projectInfo.DeploymentRegion || 'eu-west-1'
         }
         if (!projectInfo.DeploymentProfile) {
-            projectInfo.DeploymentProfile = readlineSync.question(` - ${CPROMPT}What is your Deployment Profile?${CRESET} (simplify-eu): `)
+            projectInfo.DeploymentProfile = readlineSync.question(` - ${CPROMPT}Create new Deployment Profile?${CRESET} (simplify-eu): `)
             projectInfo.DeploymentProfile = projectInfo.DeploymentProfile || 'simplify-eu'
         }
         if (!projectInfo.DeploymentAccount) {
