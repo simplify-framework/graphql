@@ -161,8 +161,8 @@ function runCommandLine() {
             }
         }
         projectInfo.ProjectVersion = projectInfo.ProjectVersion || "0.1.0"
-        projectInfo.ProjectId = projectInfo.ProjectId || argv.project
-        projectInfo.DeploymentAccount = projectInfo.DeploymentAccount || argv.account
+        projectInfo.ProjectId = argv.project || projectInfo.ProjectId
+        projectInfo.DeploymentAccount = argv.account || projectInfo.DeploymentAccount
         if (!projectInfo.ProjectName) {
             projectInfo.ProjectName = readlineSync.question(` - ${CPROMPT}What is your Project name?${CRESET} `)
             if (!projectInfo.ProjectName) {
