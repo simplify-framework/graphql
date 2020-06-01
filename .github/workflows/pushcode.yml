@@ -23,10 +23,10 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm i -g simplify-graphql
     - run: simplify-graphql template -i schema
-    - run: sed -i '/^"DeploymentProfile":/d' .projectInfo.json
-    - run: sed -i '/^"ProjectName"/s/:.*$/:\ "MyStarWars"/' .projectInfo.json
-    - run: sed -i '/^"DeploymentAccount"/s/:.*$/:\ "${{ secrets.AWS_ACCOUNT_ID }}"/' .projectInfo.json
-    - run: sed -i '/^"DeploymentBucket"/s/:.*$/:\ "starwars-deployment-eu-west-1"/' .projectInfo.json
+    - run: sed -i '/^\"DeploymentProfile\":/d' .projectInfo.json
+    - run: sed -i '/^\"ProjectName\"/s/:.*$/:\ \"MyStarWars\"/' .projectInfo.json
+    - run: sed -i '/^\"DeploymentAccount\"/s/:.*$/:\ \"${{ secrets.AWS_ACCOUNT_ID }}\"/' .projectInfo.json
+    - run: sed -i '/^\"DeploymentBucket\"/s/:.*$/:\ \"starwars-deployment-eu-west-1\"/' .projectInfo.json
     - run: simplify-graphql -i schema.graphql -p ${{ secrets.PROJECT_ID }} -a ${{ secrets.AWS_ACCOUNT_ID }} -o $PWD/ci-test
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
