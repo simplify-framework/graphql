@@ -1,0 +1,46 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: DevOps CI/CD
+
+on:
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [ master ]
+
+jobs:
+  test-petsample:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm i -g simplify-graphql
+    - run: simplify-graphql template -i schema
+    - run: sed -i '/^DeploymentProfile:/d' .projectInfo.json
+    - run: sed -i '/^ProjectName/s/:.*$/:\ MyStarWars/' .projectInfo.json
+    - run: sed -i '/^DeploymentAccount/s/:.*$/:\ ${{ secrets.AWS_ACCOUNT_ID }}/' .projectInfo.json
+    - run: sed -i '/^DeploymentBucket/s/:.*$/:\ starwars-deployment-eu-west-1/' .projectInfo.json
+    - run: simplify-graphql -i schema.graphql -p ${{ secrets.PROJECT_ID }} -a ${{ secrets.AWS_ACCOUNT_ID }} -o $PWD/ci-test
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: eu-west-1
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        role-session-name: GitHubCISession
+        role-duration-seconds: 1200
+    - run: cd $PWD/ci-test && ls
+    - run: cd $PWD/ci-test && npm install
+    - run: cd $PWD/ci-test && npm run stack-deploy
+    - run: cd $PWD/ci-test && npm run push-code
+    - run: cd $PWD/ci-test && npm run push-update
+    - run: cd $PWD/ci-test && npm run stack-destroy
