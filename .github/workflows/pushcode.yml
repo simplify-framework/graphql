@@ -38,7 +38,7 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
         role-session-name: GitHubCISession
         role-duration-seconds: 1200
-    - run: cd $PWD/ci-test && cat .projectInfo.json
+    - run: cat .projectInfo.json
     - run: cd $PWD/ci-test && npm install
     - run: cd $PWD/ci-test && npm run stack-deploy
     - run: cd $PWD/ci-test && npm run push-code
