@@ -23,7 +23,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm i -g simplify-graphql
     - run: simplify-graphql template -i schema
-    - run: sed -i '/DeploymentProfile/d' .projectInfo.json
+    - run: sed -i '/DeploymentProfile/s/:.*$/:\ \"default\",/' .projectInfo.json
     - run: sed -i '/95448430/s/:.*$/:\ \"356f8f93038cbac9\",/' .projectInfo.json
     - run: sed -i '/StarWarBook/s/:.*$/:\ \"MyStarWars\",/' .projectInfo.json
     - run: sed -i '/aws-account-id/s/:.*$/:\ \"${{ secrets.AWS_ACCOUNT_ID }}\",/' .projectInfo.json
