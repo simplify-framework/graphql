@@ -1,5 +1,5 @@
 'use strict';
-const uuid = require('uuid/v4')
+const { v4: uuidv4 } = require('uuid')
 const crypto = require("crypto")
 
 String.prototype.toTextSpace = function () {
@@ -237,7 +237,7 @@ function generateRandomValue(obj) {
         obj.Default = crypto.randomBytes(8).toString("hex")
         obj.isStringType = true
     } else if (obj.Value === "ID") {
-        obj.Default = uuid()
+        obj.Default = uuidv4()
         obj.isStringType = true
     } else if (obj.Value === "Boolean" || obj.Value === "Bool") {
         obj.Default = Math.random() >= 0.5

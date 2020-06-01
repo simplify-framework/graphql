@@ -1,6 +1,6 @@
 {
   "name": "simplify-graphql",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Simplify graphql-serverless architecture model (GSAM)",
   "main": "entrypoint.js",
   "bin": {
@@ -28,6 +28,7 @@
   "homepage": "https://github.com/simplify-framework/graphql#README",
   "dependencies": {
     "diff": "^4.0.2",
+    "yargs": "^15.3.1",
     "graphql": "^14.0.0",
     "graphql-tag": "^2.10.3",
     "hogan.js": "^3.0.2",

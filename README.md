@@ -5,6 +5,14 @@ A GraphQL Serverless Architecture Model (GSAM) - Base on imaging [Appollo GraphQ
 ![NPM Downloads](https://img.shields.io/npm/dw/simplify-graphql)
 ![Package Version](https://img.shields.io/github/package-json/v/simplify-framework/graphql?color=green)
 
+## Setup your AWS Master Credential
+
+Goto [AWS Setup Credentials](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html) then create an account to be used to provision a secure Github credentials. The root credentials must have the following permissions to configure your `deployment account` user with least privilege policy. It must has these permissions:
+	+ iam:CreateUser
+	+ iam:CreateRole
+	+ iam:PutUserPolicy
+	+ iam:PutRolePolicy
+		
 ## HOW TO: Build a GraphQL project:
 - `npm install -g simplify-graphql`
 - `simplify-graphql -i schema.graphql`
