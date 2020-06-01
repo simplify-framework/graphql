@@ -1,6 +1,6 @@
 # Simplify Framework - GraphQL 
 
-A GraphQL Serverless Architecture Model (GSAM) - Base on imaging [Appollo GraphQL](https://www.apollographql.com/) server project. We help you generating a boilerplate GraphQL based project that immediately can deploy on AWS Lambda function behind an API Gateway as a serverless model. What do you think? You can design GraphQL resolvers as a State Machine (aka AWS Step Functions) inside your project.
+A GraphQL Serverless Architecture Model (GSAM) - Base on amazing [Appollo GraphQL](https://www.apollographql.com/) server project. We help you generating a boilerplate GraphQL based project that immediately can deploy on AWS Lambda function behind an API Gateway as a serverless model. What do you think? You can design GraphQL resolvers as a State Machine (aka AWS Step Functions) inside your project.
 
 ![NPM Downloads](https://img.shields.io/npm/dw/simplify-graphql)
 ![Package Version](https://img.shields.io/github/package-json/v/simplify-framework/graphql?color=green)
