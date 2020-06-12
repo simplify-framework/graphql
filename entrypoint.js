@@ -271,6 +271,12 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                 if (data.UserType) writeTemplateFile(`${templates}/${cfg.input}`, { ...data, serverName: server.Name, dataName: data.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
         })
+        rootObject.Functions.map(func => {
+            argv.verbose && console.log(`   Data Input: ${func.FunctionName}...`)
+            gqlConfig.LambdaFunctions.map(cfg => {
+                writeTemplateFile(`${templates}/${cfg.input}`, { ...func, serverName: server.Name, functionName: func.FunctionName }, outputDir, cfg.output, projectInfo.WriteConfig)
+            })
+        })
         server.Definitions.map(serverDef => {
             serverDef.Paths.map(path => {
                 path.Resolvers.map(resolver => {
@@ -279,18 +285,15 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                         writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
                     })
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
-                        if (chain.Run.Mode == "REMOTE") {
-                            chain.RemoteExecutionMode = true
-                        }
                         argv.verbose && console.log(` - Function: ${chain.Run.Name}...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, serverName: server.Name, functionName: chain.Run.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, serverName: server.Name, functionName: chain.Run.Name, serverName: server.Name, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     })
                     if (!resolver.Resolver.Chains && resolver.Resolver.Kind == "GraphQLResolver") {
                         argv.verbose && console.log(` - Function: ${resolver.Resolver.Name}...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { serverName: server.Name, functionName: resolver.Resolver.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { serverName: server.Name, functionName: resolver.Resolver.Name, serverName: server.Name, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     }
                 })

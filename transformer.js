@@ -386,11 +386,29 @@ function schemaParser(typeDefs) {
 }
 
 function hoganFlatter(rootObject) { 
+    rootObject.Functions = []
     rootObject.Servers = convertToArrayWithNotation(rootObject.Servers)
     rootObject.Servers = rootObject.Servers.map(server => {
         server.Definitions = server.Definitions.map(serverDef => {
             let pathsArray = convertToArrayWithNotation(serverDef.Paths)
             pathsArray = pathsArray.map(path => {
+                path.Resolvers.map(resolver => {
+                    resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
+                        if (chain.Run.Mode == "REMOTE") {
+                            chain.RemoteExecutionMode = true
+                            let remoteFuncDefinition = rootObject.Functions.find(func => func.FunctionName == chain.Run.Name)
+                            if (!remoteFuncDefinition) {
+                                remoteFuncDefinition = { FunctionName: chain.Run.Name, ...chain.Run, Servers: [{ ServerName: server.Name }] }
+                                remoteFuncDefinition.Servers = convertToArrayWithNotation(remoteFuncDefinition.Servers)
+                                remoteFuncDefinition = extendObjectValue(remoteFuncDefinition, "FunctionName", chain.Run.Name)
+                                rootObject.Functions.push(remoteFuncDefinition)
+                            } else {
+                                remoteFuncDefinition.Servers.push({ ServerName: server.Name })
+                                remoteFuncDefinition.Servers = convertToArrayWithNotation(remoteFuncDefinition.Servers)
+                            }
+                        }
+                    })
+                })                
                 return { ...path, Resolvers: convertToArrayWithNotation(path.Resolvers) }
             })
             return { ...serverDef, Paths: convertToArrayWithNotation(pathsArray) }
@@ -398,7 +416,7 @@ function hoganFlatter(rootObject) {
         return { ...server, Definitions: server.Definitions }
     })
     rootObject.Servers = convertToArrayWithNotation(rootObject.Servers)
-
+    rootObject.Functions = convertToArrayWithNotation(rootObject.Functions)
     rootObject.Events = convertToArrayWithNotation(rootObject.Events)
     rootObject.DataSources = convertToArrayWithNotation(rootObject.DataSources)
     rootObject.DataObjects = Object.keys(rootObject.DataObjects).map(kobj => {

@@ -33,7 +33,10 @@ type Query
         @GraphQLResolver(Name: "listBookFunction")
     getBook(title: String): Book
         @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE HasApiKey: false })
-        @GraphQLResolver(Name: "getBookFunction")
+        @GraphQLResolverSet(Name: "getBookFunction", Chains: [
+            { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "node12.x" }, Next: "getExistingBook", Other: "doneGetBook", Retry: 3 }
+            { Run: { Name: "doneGetBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+        ])
 }
 
 type Mutation
@@ -41,7 +44,7 @@ type Mutation
     addBook(title: String, author: AuthorInput): [Book]
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 HasApiKey: true })
         @GraphQLResolverSet(Name: "addBookFunctionSet", Chains: [
-            { Run: { Name: "checkBookExisted", Mode: "LOCAL" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
+            { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "node12.x" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
             { Run: { Name: "addNewBook", Mode: "LOCAL" }, Next: "doneNewBook", Other: "errorNewBook"  }
             { Run: { Name: "doneNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
             { Run: { Name: "errorNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
