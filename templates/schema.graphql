@@ -45,7 +45,7 @@ type Mutation
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 HasApiKey: true })
         @GraphQLResolverSet(Name: "addBookFunctionSet", Chains: [
             { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "node12.x" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
-            { Run: { Name: "addNewBook", Mode: "LOCAL" }, Next: "doneNewBook", Other: "errorNewBook"  }
+            { Run: { Name: "addNewBook", Mode: "REMOTE" }, Next: "doneNewBook", Other: "errorNewBook"  }
             { Run: { Name: "doneNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
             { Run: { Name: "errorNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
         ])
