@@ -273,7 +273,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         })
         rootObject.Functions.map(func => {
             argv.verbose && console.log(`   Data Input: ${func.FunctionName}...`)
-            gqlConfig.LambdaFunctions.map(cfg => {
+            gqlConfig.RemoteFunctions.map(cfg => {
                 writeTemplateFile(`${templates}/${cfg.input}`, { ...func, serverName: server.Name, functionName: func.FunctionName }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
         })
