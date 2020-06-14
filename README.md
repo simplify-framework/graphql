@@ -131,3 +131,7 @@ fetch("https://StarwarServerQuery.../latest/query", {
 - [DataObject] Query { listBooks (...) getBook (...)  }
 - [DataObject] Mutation { addBook (...) deleteBook (...) readBook (...) likeBook (...)  }
 ```
+
+## MyStarWars on AWS Stack CloudFormation Design
+
+![MyStarWars](https://github.com/simplify-framework/graphql/blob/master/templates/cfn-designer.png?raw=true)
