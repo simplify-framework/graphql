@@ -23,9 +23,11 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 ".env.mustache",
                 ".babelrc.mustache",
                 ".gitignore.mustache",
-                "package.mustache",
+                "package-src.mustache",
                 "function.mustache",
                 "server-input.mustache",
+                "function-input.mustache",
+                "index-src.mustache",
                 "webpack.config.mustache",
                 "webpack.config.layer.mustache",
                 "docker-entrypoint.mustache",
@@ -33,7 +35,6 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 "README.mustache"
             ]            
             if (config.ignores) {
-                console.log("IGNORES", config.ignores)
                 config.ignores.split(';').forEach(function(ignore) {
                     const parts = ignore.split('.')
                     const ignoredFile = parts.splice(0, parts.length - 1).join('.') + '.mustache'
@@ -41,8 +42,15 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 })
             }
             if (ignoreOverridenFiles.indexOf(inputFileName)>=0) {
-                return undefined
-            } 
+                if (!config.override) {
+                    console.log(`   * ${CPROMPT}ignore${CRESET}`, filePath)
+                    return undefined
+                } else {
+                    console.log(`   * ${CPROMPT}update${CRESET}`, filePath)
+                }
+            } else {
+                console.log(`   * ${CPROMPT}update${CRESET}`, filePath)
+            }
             var oldFile = fs.readFileSync(filePath).toString()
             function addNewLine(value, lastRemoved) {
                 return lastRemoved ? `${value}>>>>>>> auto:${filePath}\n` : value
@@ -79,6 +87,7 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 }
             }
         } else {
+            console.log(`   * ${CPROMPT}create${CRESET}`, filePath)
             fs.writeFileSync(filePath, newFileData, encoding);
         }
     }
@@ -120,16 +129,17 @@ var argv = require('yargs')
     .string('account')
     .alias('a', 'account')
     .describe('account', 'Account Id')
+    .string('env')
+    .alias('e', 'env')
+    .describe('env', 'Environment')
     .boolean('merge')
-    .default('merge', false)
     .describe('merge', 'Auto merge files')
     .boolean('diff')
-    .default('diff', false)
     .describe('diff', 'Generate diff file')
     .string('ignores')
-    .default('ignores', false)
     .alias('n', 'ignores')
     .describe('ignores', 'eg: keep-your-code.js;keep-your-data.json')
+    .string('override')
     .boolean('verbose')
     .describe('verbose', 'Increase verbosity')
     .alias('v', 'verbose')
@@ -162,6 +172,7 @@ function runCommandLine() {
         }
         projectInfo.ProjectVersion = projectInfo.ProjectVersion || "0.1.0"
         projectInfo.ProjectId = argv.project || projectInfo.ProjectId
+        projectInfo.DeploymentEnv = argv.env || projectInfo.DeploymentEnv
         projectInfo.DeploymentAccount = argv.account || projectInfo.DeploymentAccount
         if (!projectInfo.ProjectName) {
             projectInfo.ProjectName = readlineSync.question(` - ${CPROMPT}What is your Project name?${CRESET} `)
@@ -182,6 +193,10 @@ function runCommandLine() {
             projectInfo.ProjectId = readlineSync.question(` - ${CPROMPT}What is your Project Id?${CRESET} (${randomValue}): `)
             projectInfo.ProjectId = projectInfo.ProjectId || randomValue
         }
+        if (!projectInfo.DeploymentEnv) {
+            projectInfo.DeploymentEnv = readlineSync.question(` - ${CPROMPT}Create your Deployment Environment?${CRESET} (*demo|devel|staging): `)
+            projectInfo.DeploymentEnv = projectInfo.DeploymentEnv || 'demo'
+        }
         if (!projectInfo.DeploymentBucket) {
             projectInfo.DeploymentBucket = readlineSync.question(` - ${CPROMPT}Choose your Deployment Bucket?${CRESET} (starwars-deployment-eu-west-1): `)
             projectInfo.DeploymentBucket = projectInfo.DeploymentBucket || 'starwars-deployment-eu-west-1'
@@ -201,13 +216,6 @@ function runCommandLine() {
                 process.exit(-1)
             }
         }
-        if (typeof projectInfo.DeploymentKeyVault === 'undefined') {
-            if (readlineSync.keyInYN(` - ${CPROMPT}Do you want to use Secret Manager as KeyVault?${CRESET} `)) {
-                projectInfo.DeploymentKeyVault = true
-            } else {
-                projectInfo.DeploymentKeyVault = false
-            }
-        }
         if (!projectInfo.DeploymentApiKey) {
             const randomValue = crypto.randomBytes(20).toString("hex")
             projectInfo.DeploymentApiKey = readlineSync.question(` - ${CPROMPT}What is your Endpoint ApiKey?${CRESET} (${randomValue}): `)
@@ -218,15 +226,18 @@ function runCommandLine() {
         projectInfo.ProjectOutput = projectInfo.ProjectOutput || argv.output
         projectInfo.GeneratorVersion = require('./package.json').version
         projectInfo = extendObjectValue(projectInfo, "ProjectName", projectInfo.ProjectName)
-        projectInfo = extendObjectValue(projectInfo, "DeploymentStage", projectInfo.DeploymentStage)
-        if (argv.diff) {
+        projectInfo = extendObjectValue(projectInfo, "DeploymentEnv", projectInfo.DeploymentEnv)
+        if (typeof argv.diff !== 'undefined') {
             config.writes.diff = true;
         }
-        if (argv.merge) {
+        if (typeof argv.merge !== 'undefined') {
             config.writes.merge = true;
         }
-        if (argv.ignores) {
-            config.writes.ignores = argv.ignores;
+        if (typeof argv.ignores !== 'undefined') {
+            config.writes.ignores = true;
+        }
+        if (typeof argv.override !== 'undefined') {
+            config.writes.override = true;
         }
         projectInfo.WriteConfig = config.writes
         const typeDefs = gql(schema);
@@ -271,6 +282,12 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                 if (data.UserType) writeTemplateFile(`${templates}/${cfg.input}`, { ...data, serverName: server.Name, dataName: data.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
         })
+        rootObject.Functions.map(func => {
+            argv.verbose && console.log(`   Remote Function: ${func.FunctionName}...`)
+            gqlConfig.RemoteFunctions.map(cfg => {
+                writeTemplateFile(`${templates}/${cfg.input}`, { ...func, serverName: server.Name, functionName: func.FunctionName, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+            })
+        })
         server.Definitions.map(serverDef => {
             serverDef.Paths.map(path => {
                 path.Resolvers.map(resolver => {
@@ -279,18 +296,15 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                         writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
                     })
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
-                        if (chain.Run.Mode == "REMOTE") {
-                            chain.RemoteExecutionMode = true
-                        }
                         argv.verbose && console.log(` - Function: ${chain.Run.Name}...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, serverName: server.Name, functionName: chain.Run.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, serverName: server.Name, functionName: chain.Run.Name, serverName: server.Name, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     })
                     if (!resolver.Resolver.Chains && resolver.Resolver.Kind == "GraphQLResolver") {
                         argv.verbose && console.log(` - Function: ${resolver.Resolver.Name}...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { serverName: server.Name, functionName: resolver.Resolver.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { serverName: server.Name, functionName: resolver.Resolver.Name, serverName: server.Name, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     }
                 })
@@ -317,12 +331,13 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log("╓───────────────────────────────────────────────────────────────╖")
         console.log("║               Simplify Framework  - GraphQL                   ║")
         console.log("╙───────────────────────────────────────────────────────────────╜")
-        console.log(` - Automatic code merge is ${argv.merge ? 'on (use option --merge=false to turn off)' : 'off (use option --merge to turn on)'}`)
-        console.log(` - Diff file generation is ${argv.diff ? 'on (automatic turn on if --merge=false)' : 'off (use option --diff to turn on)'}`)
+        console.log(` - Automatic code merge is ${argv.merge ? 'on (remove option --merge to turn off)' : 'off (use option --merge to turn on)'}`)
+        console.log(` - Diff file generation is ${argv.diff ? 'on (remove option --diff to turn off)' : 'off (use option --diff to turn on)'}`)
+        console.log(` - Override custom code is ${argv.override ? 'on (remove option --override to turn off)' : 'off (use option --override to turn on)'}`)
         const { err, projectInfo } = runCommandLine()
         console.log(` - Finish code generation ${!err ? `with NO error. See ${argv.output=="./"?"current folder":argv.output} for your code!` : err}`);
         console.log(`\n * Follow these commands to walk throught your project: (${projectInfo.ProjectName})\n`)
-        console.log(` 1. Setup AWS Account\t: ${CBEGIN}bash .simplify-graphql/aws-setup.sh ${CRESET}`)
+        console.log(` 1. Setup AWS Account\t: ${CBEGIN}bash .simplify-graphql/setup.sh --profile MASTER ${CRESET}`)
         console.log(` 2. Goto Project Dir\t: ${CBEGIN}cd ${argv.output} ${CRESET}`)
         console.log(` 3. Install Packages\t: ${CBEGIN}npm install ${CRESET}`)
         console.log(` 4. Deploy AWS Stacks\t: ${CBEGIN}npm run stack-deploy ${CRESET}`)
@@ -330,7 +345,8 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log(` 6. Update Environments\t: ${CBEGIN}npm run push-update ${CRESET}`)
         console.log(` 7. Test Your Functions\t: ${CBEGIN}npm run test ${CRESET}`)
         console.log(` 8. Destroy AWS Stacks\t: ${CBEGIN}npm run stack-destroy ${CRESET}`)
-        console.log(` 9. Cleanup AWS Account\t: ${CBEGIN}bash .simplify-graphql/aws-cleanup.sh ${CRESET}\n`)
+        console.log(` 9. Cleanup AWS Account\t: ${CBEGIN}bash .simplify-graphql/cleanup.sh --profile MASTER ${CRESET}\n`)
+        console.log(`\n * Create or switch environment with option --env=ENVIRONMENT_NAME\n`);
     }
 }, function (err) {
     console.error(`${err}`)
