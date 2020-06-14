@@ -252,7 +252,7 @@ function generateRandomValue(obj) {
 function getServerRuntime(obj) {
     obj.Runtime = obj.Runtime || 'nodejs12.x'
     if (obj.Runtime.startsWith('python')) {
-        obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { \'statusCode\': 200, \'body\': \'{}\' }`
+        obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { 'statusCode': 200, 'body': '{}' }`
         obj.Language = 'py'
     } else if (obj.Runtime.startsWith('nodej')) {
         obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { statusCode: 200, body: JSON.stringify({}) })}`
@@ -267,10 +267,10 @@ function getServerRuntime(obj) {
 function getResolverRuntime(obj) {
     obj.Runtime = obj.Runtime || 'nodejs12.x'
     if (obj.Runtime.startsWith('python')) {
-        obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { \'foo\': \'bar\' }`
+        obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { 'foo': 'bar' }`
         obj.Language = 'py'
     } else if (obj.Runtime.startsWith('nodej')) {
-        obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { foo: \'bar\'s })}`
+        obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { 'foo': 'bar' }) }`
         obj.Language = 'js'
     } else {
         console.error(` - Remote Runtime ${obj.Runtime} is not supported!`)
