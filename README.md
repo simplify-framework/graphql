@@ -71,7 +71,6 @@ mutation CreateNewBook {
     {
         title
         author {
-            id
             name
         }
     }

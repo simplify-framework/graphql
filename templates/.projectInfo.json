@@ -1,13 +1,10 @@
 {
-    "ProjectName": "StarWarBook",
+    "ProjectName": "MyStarWars",
     "ProjectVersion": "0.1.0",
-    "ProjectDesc": "StarWars Book Project",
-    "ProjectId": "95448430",
-    "DeploymentKeyVault": false,
-    "DeploymentBucket": "starwar-book-deployment",
-    "DeploymentStage": "31052020",
+    "ProjectDesc": "This is a new start wars",
     "DeploymentRegion": "eu-west-1",
+    "DeploymentApiKey": "55e39faadd193384379f1b59f399bf1068f05e48",
     "DeploymentProfile": "starwars-eu",
-    "DeploymentAccount": "aws-account-id",
-    "DeploymentApiKey": "41f45a5450dff588b598903e95df4af3a256cea9"
+    "DeploymentBucket": "starwars-deployment-eu-west-1",
+    "DeploymentEnv": "demo"
 }

@@ -34,7 +34,7 @@ type Query
     getBook(title: String): Book
         @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE HasApiKey: false })
         @GraphQLResolverSet(Name: "getBookFunction", Chains: [
-            { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "node12.x" }, Next: "getExistingBook", Other: "doneGetBook", Retry: 3 }
+            { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "nodejs12.x" }, Next: "getExistingBook", Other: "doneGetBook", Retry: 3 }
             { Run: { Name: "doneGetBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
         ])
 }
@@ -44,7 +44,7 @@ type Mutation
     addBook(title: String, author: AuthorInput): [Book]
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 HasApiKey: true })
         @GraphQLResolverSet(Name: "addBookFunctionSet", Chains: [
-            { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "node12.x" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
+            { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "nodejs12.x" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
             { Run: { Name: "addNewBook", Mode: "REMOTE" }, Next: "doneNewBook", Other: "errorNewBook"  }
             { Run: { Name: "doneNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
             { Run: { Name: "errorNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }

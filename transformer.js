@@ -249,6 +249,36 @@ function generateRandomValue(obj) {
     return obj
 }
 
+function getServerRuntime(obj) {
+    obj.Runtime = obj.Runtime || 'nodejs12.x'
+    if (obj.Runtime.startsWith('python')) {
+        obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { \'statusCode\': 200, \'body\': \'{}\' }`
+        obj.Language = 'py'
+    } else if (obj.Runtime.startsWith('nodej')) {
+        obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { statusCode: 200, body: JSON.stringify({}) })}`
+        obj.Language = 'js'
+    } else {
+        console.error(` - Gateway Runtime ${obj.Runtime} is not supported!`)
+        process.exit(255)
+    }
+    return obj
+}
+
+function getResolverRuntime(obj) {
+    obj.Runtime = obj.Runtime || 'nodejs12.x'
+    if (obj.Runtime.startsWith('python')) {
+        obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { \'foo\': \'bar\' }`
+        obj.Language = 'py'
+    } else if (obj.Runtime.startsWith('nodej')) {
+        obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { foo: \'bar\'s })}`
+        obj.Language = 'js'
+    } else {
+        console.error(` - Remote Runtime ${obj.Runtime} is not supported!`)
+        process.exit(255)
+    }
+    return obj
+}
+
 function schemaParser(typeDefs) {
     let rootObject = { Servers: {}, Events: {}, DataSources: {}, DataInputs: {}, DataObjects: {}, EnumObjects: {} }
     let dataSourceName = null
@@ -283,17 +313,7 @@ function schemaParser(typeDefs) {
                         obj = extendObjectValue(obj, "Name", obj.Name)
                         rootObject.Servers[serverName] = obj
                         if (!obj.Options) obj.Options = {}
-                        obj.Runtime = obj.Runtime || 'nodejs12.x'
-                        if (obj.Runtime.startsWith('python')) {
-                            obj.RuntimeCode = obj.RuntimeCode || `def handler(event, context): return { \'statusCode\': 200, \'body'\: \'{}\' }`
-                            obj.Language = 'py'
-                        } else if (obj.Runtime.startsWith('nodej')) {
-                            obj.RuntimeCode = obj.RuntimeCode || `exports.handler = function (event, context, callback) { callback(null, { statusCode: 200, body: JSON.stringify({}) })}`
-                            obj.Language = 'js'
-                        } else {
-                            console.error(` - Gateway Runtime ${obj.Runtime} is not supported!`)
-                            process.exit(255)
-                        }
+                        obj = getServerRuntime(obj)
                         obj.Options.BurstLimit = obj.Options.BurstLimit || 100
                         obj.Options.RateLimit = obj.Options.RateLimit || 10
                         obj.Options.QuotaLimit = obj.Options.QuotaLimit || 100
@@ -396,6 +416,7 @@ function hoganFlatter(rootObject) {
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
                         if (chain.Run.Mode == "REMOTE") {
                             chain.RemoteExecutionMode = true
+                            chain.Run = getResolverRuntime(chain.Run)
                             let remoteFuncDefinition = rootObject.Functions.find(func => func.FunctionName == chain.Run.Name)
                             if (!remoteFuncDefinition) {
                                 remoteFuncDefinition = { FunctionName: chain.Run.Name, ...chain.Run, Servers: [{ ServerName: server.Name }] }
