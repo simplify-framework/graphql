@@ -45,9 +45,19 @@ Goto [AWS Setup Credentials](https://docs.aws.amazon.com/sdk-for-java/v1/develop
     4. Deploy AWS Stacks   : npm run stack-deploy 
     5. Push Code Functions : npm run push-code 
     6. Update Environments : npm run push-update 
-    7. Test Your Functions : npm run test 
+    7. Monitor Functions   : npm run monitor-metric
     8. Destroy AWS Stacks  : npm run stack-destroy 
     9. Cleanup AWS Account : bash .simplify-graphql/aws-cleanup.sh 
+
+## Security & Operation commands
+
+    1. npm run monitor-metric   --displaying operation metrics: Invocations, Errors, Durations, Concurrency, Throttles
+    2. npm run monitor-config   --displaying configurations: CodeSize, MemorySize, Timeout, Runtime, LastModified
+    3. npm run security-check   --checking for consistency: check code function hash, code layers' hashes, security setup
+    4. npm run security-patch   --patching for secure encryption: secure function environment, secure log with KMS CMK
+    5. npm run take-snapshot    --recording for consistency: save code function hash, code layers' hashes and configuration
+
+    See [Simplify SecOps](https://github.com/simplify-framework/security) for detail commands and optionnal parameters...
 
 ## HOW TO: Test your GraphQL API server
 ```JavaScript

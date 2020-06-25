@@ -1,6 +1,6 @@
 {
   "name": "simplify-graphql",
-  "version": "0.1.11",
+  "version": "0.1.13",
   "description": "Simplify graphql-serverless architecture model (GSAM)",
   "main": "entrypoint.js",
   "bin": {
@@ -34,7 +34,7 @@
     "hogan.js": "^3.0.2",
     "mkdirp": "^1.0.4",
     "readline-sync": "^1.4.10",
-    "simplify-templates": "^0.1.13",
+    "simplify-templates": "^0.1.15",
     "uuid": "^8.1.0"
   }
 }
