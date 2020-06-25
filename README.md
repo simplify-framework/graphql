@@ -134,4 +134,4 @@ fetch("https://StarwarServerQuery.../latest/query", {
 
 ## MyStarWars on AWS Stack CloudFormation Design
 
-![MyStarWars](https://github.com/simplify-framework/graphql/blob/master/templates/cfn-designer.png?raw=true)
+![MyStarWars](https://github.com/simplify-framework/graphql/blob/1a36f73c4e2d9c256b40dca622a3a46248bf843a/templates/cfn-designer.png?raw=true)
