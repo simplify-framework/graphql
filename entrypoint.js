@@ -343,7 +343,7 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log(` 4. Deploy AWS Stacks\t: ${CBEGIN}npm run stack-deploy ${CRESET}`)
         console.log(` 5. Push Code Functions\t: ${CBEGIN}npm run push-code ${CRESET}`)
         console.log(` 6. Update Environments\t: ${CBEGIN}npm run push-update ${CRESET}`)
-        console.log(` 7. Test Your Functions\t: ${CBEGIN}npm run test ${CRESET}`)
+        console.log(` 7. Monitor Metrics\t: ${CBEGIN}npm run monitor-metric ${CRESET}`)
         console.log(` 8. Destroy AWS Stacks\t: ${CBEGIN}npm run stack-destroy ${CRESET}`)
         console.log(` 9. Cleanup AWS Account\t: ${CBEGIN}bash .simplify-graphql/cleanup.sh --profile MASTER ${CRESET}\n`)
         console.log(`\n * Create or switch environment with option --env=ENVIRONMENT_NAME\n`);
