@@ -115,7 +115,7 @@ function objectValueParse(obj) {
 }
 
 function parseObjectType(obj, name, def) {
-    if (obj === "List" || obj === "String" || obj === "ID" || obj === "Boolean" ||  obj === "Int" || obj === "Float") {
+    if (obj === "DateTime" || obj === "List" || obj === "String" || obj === "ID" || obj === "Boolean" ||  obj === "Int" || obj === "Float") {
         obj = { Name: name, Value: obj, isScalarType: true }
         obj = generateRandomValue(obj)
     } else {
