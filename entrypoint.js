@@ -239,13 +239,16 @@ function runCommandLine() {
         if (typeof argv.override !== 'undefined') {
             config.writes.override = true;
         }
+        if (typeof argv.verbose !== 'undefined') {
+            argv.verbose = true;
+        }
         projectInfo.WriteConfig = config.writes
         const typeDefs = gql(schema);
         mainProcessor(typeDefs, schema, projectInfo)
         return { err: undefined, projectInfo }
     } catch (err) {
         console.error(`${err}`)
-        return { err, projectInfo }
+        return { err }
     }
 }
 
@@ -293,7 +296,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                 path.Resolvers.map(resolver => {
                     argv.verbose && console.log(`+ Resolver: ${resolver.Resolver.Name}...`)
                     gqlConfig.GraphQLResolvers.map(cfg => {
-                        writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
+                        writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name,...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                     })
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
                         argv.verbose && console.log(` - Function: ${chain.Run.Name}...`)
@@ -336,17 +339,19 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log(` - Override custom code is ${argv.override ? 'on (remove option --override to turn off)' : 'off (use option --override to turn on)'}`)
         const { err, projectInfo } = runCommandLine()
         console.log(` - Finish code generation ${!err ? `with NO error. See ${argv.output=="./"?"current folder":argv.output} for your code!` : err}`);
-        console.log(`\n * Follow these commands to walk throught your project: (${projectInfo.ProjectName})\n`)
-        console.log(` 1. Setup AWS Account\t: ${CBEGIN}bash .simplify-graphql/setup.sh --profile MASTER ${CRESET}`)
-        console.log(` 2. Goto Project Dir\t: ${CBEGIN}cd ${argv.output} ${CRESET}`)
-        console.log(` 3. Install Packages\t: ${CBEGIN}npm install ${CRESET}`)
-        console.log(` 4. Deploy AWS Stacks\t: ${CBEGIN}npm run stack-deploy ${CRESET}`)
-        console.log(` 5. Push Code Functions\t: ${CBEGIN}npm run push-code ${CRESET}`)
-        console.log(` 6. Update Environments\t: ${CBEGIN}npm run push-update ${CRESET}`)
-        console.log(` 7. Monitor Metrics\t: ${CBEGIN}npm run monitor-metric ${CRESET}`)
-        console.log(` 8. Destroy AWS Stacks\t: ${CBEGIN}npm run stack-destroy ${CRESET}`)
-        console.log(` 9. Cleanup AWS Account\t: ${CBEGIN}bash .simplify-graphql/cleanup.sh --profile MASTER ${CRESET}\n`)
-        console.log(`\n * Create or switch environment with option --env=ENVIRONMENT_NAME\n`);
+        if (!err && projectInfo) {
+            console.log(`\n * Follow these commands to walk throught your project: (${projectInfo.ProjectName})\n`)
+            console.log(` 1. Setup AWS Account\t: ${CBEGIN}bash .simplify-graphql/setup.sh --profile MASTER ${CRESET}`)
+            console.log(` 2. Goto Project Dir\t: ${CBEGIN}cd ${argv.output} ${CRESET}`)
+            console.log(` 3. Install Packages\t: ${CBEGIN}npm install ${CRESET}`)
+            console.log(` 4. Deploy AWS Stacks\t: ${CBEGIN}npm run stack-deploy ${CRESET}`)
+            console.log(` 5. Push Code Functions\t: ${CBEGIN}npm run push-code ${CRESET}`)
+            console.log(` 6. Update Environments\t: ${CBEGIN}npm run push-update ${CRESET}`)
+            console.log(` 7. Monitor Metrics\t: ${CBEGIN}npm run monitor-metric ${CRESET}`)
+            console.log(` 8. Destroy AWS Stacks\t: ${CBEGIN}npm run stack-destroy ${CRESET}`)
+            console.log(` 9. Cleanup AWS Account\t: ${CBEGIN}bash .simplify-graphql/cleanup.sh --profile MASTER ${CRESET}\n`)
+            console.log(`\n * Create or switch environment with option --env=ENVIRONMENT_NAME\n`);
+        }
     }
 }, function (err) {
     console.error(`${err}`)
