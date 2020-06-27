@@ -13,7 +13,8 @@ const CERROR = '\x1b[31m'
 const CRESET = '\x1b[0m'
 const CPROMPT = '\x1b[33m'
 
-const { schemaParser, hoganFlatter, extendObjectValue } = require('./transformer')
+const { schemaParser, hoganFlatter, extendObjectValue } = require('./transformer');
+const transformer = require('./transformer');
 
 function creatFileOrPatch(filePath, newFileData, encoding, config) {
     try {
@@ -252,6 +253,39 @@ function runCommandLine() {
     }
 }
 
+function parseDefaultObjectValue(rootObject, vObj) {
+    if (vObj.Value.isObjectType || vObj.Value.isListObjectType) {
+        let newValue = rootObject.DataObjects.find(obj => obj.Name == vObj.Value.Value)
+        if (!newValue) newValue = rootObject.DataInputs.find(obj => obj.Name == vObj.Value.Value)
+        if (!newValue) newValue = rootObject.EnumObjects.find(obj => obj.Name == vObj.Value.Value)
+        if (newValue.Type === "EnumObject") {
+            vObj.Value.Default = newValue.Value[0].Value
+            vObj.Value.isEnumObject = true
+        } else {
+            vObj.Value.Default = Object.keys(newValue.Value).map(k => {
+                let obj = {}
+                if (!newValue.Value[k].isObjectType) {
+                    if (typeof newValue.Value[k] === "object" && newValue.Value[k].Value.Name) {
+                        if (newValue.Value[k].Value) {
+                            obj = parseDefaultObjectValue(rootObject, newValue.Value[k])
+                        }
+                        obj[newValue.Value[k].Name] = newValue.Value[k].Value.Default || newValue.Value[k].Value
+                        return obj
+                    }
+                    return newValue.Value[k]
+                }
+            }).filter(obj => obj)
+            let objResult = {}
+            Object.keys(vObj.Value.Default).map(kobj => {
+                objResult[vObj.Value.Default[kobj].Name] = vObj.Value.Default[kobj].Value.Default
+            })
+            vObj.Value.Default = JSON.stringify(objResult)
+            vObj.Value.isJSONObject = true
+        }
+    }
+    return vObj
+}
+
 function mainProcessor(typeDefs, schema, projectInfo) {
     const templatePath = require("simplify-templates")
     const templates = path.join(templatePath, "graphql")
@@ -287,8 +321,12 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         })
         rootObject.Functions.map(func => {
             argv.verbose && console.log(`   Remote Function: ${func.FunctionName}...`)
+            const dataObject = rootObject.DataObjects.find(obj => obj.Name ==func.DataSchema)
+            dataObject.Value.map(v => {
+                return parseDefaultObjectValue(rootObject, v)
+            }).filter(obj => obj)
             gqlConfig.RemoteFunctions.map(cfg => {
-                writeTemplateFile(`${templates}/${cfg.input}`, { ...func, serverName: server.Name, functionName: func.FunctionName, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                writeTemplateFile(`${templates}/${cfg.input}`, { ...func, serverName: server.Name, functionName: func.FunctionName, functionNameSnake: func.FunctionNameSnake, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
         })
         server.Definitions.map(serverDef => {
@@ -298,16 +336,21 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                     gqlConfig.GraphQLResolvers.map(cfg => {
                         writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name,...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                     })
+                    const dataObject = rootObject.DataObjects.find(obj => obj.Name ==resolver.DataSchema)
+                    dataObject.Value.map(v => {
+                        return parseDefaultObjectValue(rootObject, v)
+                    }).filter(obj => obj)
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
                         argv.verbose && console.log(` - Function: ${chain.Run.Name}...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, serverName: server.Name, functionName: chain.Run.Name, serverName: server.Name, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, serverName: server.Name, functionName: chain.Run.Name, serverName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     })
                     if (!resolver.Resolver.Chains && resolver.Resolver.Kind == "GraphQLResolver") {
                         argv.verbose && console.log(` - Function: ${resolver.Resolver.Name}...`)
+                        console.log(dataObject.Value)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { serverName: server.Name, functionName: resolver.Resolver.Name, serverName: server.Name, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { serverName: server.Name, functionName: resolver.Resolver.Name, serverName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     }
                 })

@@ -92,15 +92,19 @@ let GetBooksAndAuthors = {
     "query": Queries
 }
 
-fetch("https://StarwarServerQuery.../latest/query", {
+fetch("https://y5m4j8o1v5.execute-api.eu-west-1.amazonaws.com/demo/book/user", {
     "headers": {
         "content-type": "application/json"
     },
     "body": JSON.stringify(GetBooksAndAuthors),
     "method": "POST",
     "mode": "cors"
-});
+}).then(response => response.json()).then(json => console.log(json));
 ```
+
+## Using CURL with local development server
+
+curl -X POST -d '{ "operationName": "GetBooksAndAuthors", "variables": {}, "query": "query GetBooksAndAuthors { listBooks { title } }"}' -H 'content-type:application/json' http://localhost:4000/graphql
 
 ## The StarWars Verbal Architecture Model
 ```

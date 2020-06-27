@@ -119,7 +119,7 @@ function parseObjectType(obj, name, def) {
         obj = { Name: name, Value: obj, isScalarType: true }
         obj = generateRandomValue(obj)
     } else {
-        obj = { Name: name, Value: obj, isObjectType: true }
+        obj = generateRandomValue({ Name: name || 'type', Value: obj, isObjectType: true })
     }
     return obj
 }
@@ -231,8 +231,9 @@ function generateRandomValue(obj) {
             obj.isListStringType = true
         } else {
             obj.Default = convertToArrayWithNotation([obj.Value])
-            obj.isListStringType = false
+            obj.isListObjectType = true
         }
+    } else if (obj.isObjectType) {
     } else if (obj.Value === "String") {
         obj.Default = crypto.randomBytes(8).toString("hex")
         obj.isStringType = true
@@ -240,11 +241,16 @@ function generateRandomValue(obj) {
         obj.Default = uuidv4()
         obj.isStringType = true
     } else if (obj.Value === "Boolean" || obj.Value === "Bool") {
-        obj.Default = Math.random() >= 0.5
+        obj.Default = Math.random() >= 0.5 ? true : false
+        obj.isBoolType = true
     } else if (obj.Value === "Int") {
         obj.Default = randomInteger(0, 9999)
     } else if (obj.Value === "Float") {
         obj.Default = randomNumber(0, 9999)
+    } else if (obj.Value === "DateTime") {
+        obj.Default = new Date().toISOString()
+    } else {
+        obj.isObjectType = true
     }
     return obj
 }
@@ -419,7 +425,8 @@ function hoganFlatter(rootObject) {
                             chain.Run = getResolverRuntime(chain.Run)
                             let remoteFuncDefinition = rootObject.Functions.find(func => func.FunctionName == chain.Run.Name)
                             if (!remoteFuncDefinition) {
-                                remoteFuncDefinition = { FunctionName: chain.Run.Name, ...chain.Run, Servers: [{ ServerName: server.Name }] }
+                                const isResultListType = resolver.DataType == "ListType"
+                                remoteFuncDefinition = { FunctionName: chain.Run.Name, ...chain.Run, Servers: [{ ServerName: server.Name }], ...resolver, isResultListType }
                                 remoteFuncDefinition.Servers = convertToArrayWithNotation(remoteFuncDefinition.Servers)
                                 remoteFuncDefinition = extendObjectValue(remoteFuncDefinition, "FunctionName", chain.Run.Name)
                                 rootObject.Functions.push(remoteFuncDefinition)
@@ -476,5 +483,6 @@ function hoganFlatter(rootObject) {
 module.exports = {
     hoganFlatter: hoganFlatter,
     schemaParser: schemaParser,
-    extendObjectValue: extendObjectValue
+    extendObjectValue: extendObjectValue,
+    generateRandomValue: generateRandomValue
 }
