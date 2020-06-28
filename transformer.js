@@ -396,8 +396,9 @@ function schemaParser(typeDefs) {
                                 if (resolver) {
                                     obj.ResolverType = obj.Kind === "GraphQLResolver" ? "Method" : "Function"
                                     resolver.Resolver = obj
-                                    if (resolver.Resolver.Chains)
+                                    if (resolver.Resolver.Chains) {
                                         resolver.Resolver.Chains = convertToArrayWithNotation(resolver.Resolver.Chains)
+                                    }
                                     resolver.Resolver = extendObjectValue(resolver.Resolver, "Name", obj.Name)
                                 }
                             }
@@ -484,5 +485,6 @@ module.exports = {
     hoganFlatter: hoganFlatter,
     schemaParser: schemaParser,
     extendObjectValue: extendObjectValue,
-    generateRandomValue: generateRandomValue
+    generateRandomValue: generateRandomValue,
+    convertToArrayWithNotation: convertToArrayWithNotation
 }

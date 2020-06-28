@@ -6,9 +6,17 @@ type Book
 {
     title: String
     author: Author!
+    subauthor: Author!
     comments: [String]
     outofstock: Boolean
     types: [AuthorType]
+    createdDate: DateTime
+    updatedDate: DateTime
+}
+
+type NestBook {
+    name: String
+    id: ID!
 }
 
 type Author
@@ -16,6 +24,7 @@ type Author
     id: ID!
     name: String!
     type: AuthorType
+    ref: NestBook
 }
 
 input AuthorInput {
@@ -35,7 +44,8 @@ type Query
         @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE HasApiKey: false })
         @GraphQLResolverSet(Name: "getBookFunction", Chains: [
             { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "nodejs12.x" }, Next: "getExistingBook", Other: "doneGetBook", Retry: 3 }
-            { Run: { Name: "doneGetBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "getExistingBook", Mode: "LOCAL" }, Next: "doneGetBook", Other: "ERROR"  }
+            { Run: { Name: "doneGetBook", Mode: "LOCAL" }, Next: "DONE", Other: "ERROR"  }
         ])
 }
 
@@ -46,8 +56,8 @@ type Mutation
         @GraphQLResolverSet(Name: "addBookFunctionSet", Chains: [
             { Run: { Name: "checkBookExisted", Mode: "REMOTE", Runtime: "nodejs12.x" }, Next: "addNewBook", Other: "doneNewBook", Retry: 3 }
             { Run: { Name: "addNewBook", Mode: "REMOTE" }, Next: "doneNewBook", Other: "errorNewBook"  }
-            { Run: { Name: "doneNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
-            { Run: { Name: "errorNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "doneNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "ERROR"  }
+            { Run: { Name: "errorNewBook", Mode: "LOCAL" }, Next: "DONE", Other: "ERROR"  }
         ])
     deleteBook(title: String, author: AuthorInput): Book
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 HasApiKey: true })
@@ -56,9 +66,9 @@ type Mutation
         @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })
         @GraphQLResolver(Name: "readBookFunction", Chains: [
             { Run: { Name: "checkBookPaid", Mode: "LOCAL" }, Next: "readNewBook", Other: "errorPaidBook" }
-            { Run: { Name: "readNewBook", Mode: "LOCAL" }, Next: "doneReadBook", Other: "DONE"  }
-            { Run: { Name: "doneReadBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
-            { Run: { Name: "errorPaidBook", Mode: "LOCAL" }, Next: "DONE", Other: "DONE"  }
+            { Run: { Name: "readNewBook", Mode: "LOCAL" }, Next: "doneReadBook", Other: "ERROR"  }
+            { Run: { Name: "doneReadBook", Mode: "LOCAL" }, Next: "DONE", Other: "ERROR"  }
+            { Run: { Name: "errorPaidBook", Mode: "LOCAL" }, Next: "DONE", Other: "ERROR"  }
         ])
     likeBook(title: String, author: AuthorInput): Book
         @GraphQLEndpoint(Path: "/book/user", Options: { AuthMode: COGNITO })

@@ -275,12 +275,7 @@ function parseDefaultObjectValue(rootObject, vObj) {
                     return newValue.Value[k]
                 }
             }).filter(obj => obj)
-            let objResult = {}
-            Object.keys(vObj.Value.Default).map(kobj => {
-                objResult[vObj.Value.Default[kobj].Name] = vObj.Value.Default[kobj].Value.Default
-            })
-            vObj.Value.Default = JSON.stringify(objResult)
-            vObj.Value.isJSONObject = true
+            vObj.Value.isNestedObject = true
         }
     }
     return vObj
@@ -325,6 +320,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
             dataObject.Value.map(v => {
                 return parseDefaultObjectValue(rootObject, v)
             }).filter(obj => obj)
+            dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
             gqlConfig.RemoteFunctions.map(cfg => {
                 writeTemplateFile(`${templates}/${cfg.input}`, { ...func, serverName: server.Name, functionName: func.FunctionName, functionNameSnake: func.FunctionNameSnake, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
@@ -332,14 +328,16 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         server.Definitions.map(serverDef => {
             serverDef.Paths.map(path => {
                 path.Resolvers.map(resolver => {
-                    argv.verbose && console.log(`+ Resolver: ${resolver.Resolver.Name}...`)
-                    gqlConfig.GraphQLResolvers.map(cfg => {
-                        writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name,...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
-                    })
+                    resolver.isResultListType = resolver.DataType == "ListType"
                     const dataObject = rootObject.DataObjects.find(obj => obj.Name ==resolver.DataSchema)
                     dataObject.Value.map(v => {
                         return parseDefaultObjectValue(rootObject, v)
                     }).filter(obj => obj)
+                    argv.verbose && console.log(`+ Resolver: ${resolver.Resolver.Name}...`)
+                    gqlConfig.GraphQLResolvers.map(cfg => {
+                        writeTemplateFile(`${templates}/${cfg.input}`, { Path: path.Path, OperationId: resolver.OperationId, ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                    })
+                    dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
                         argv.verbose && console.log(` - Function: ${chain.Run.Name}...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
@@ -348,9 +346,8 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                     })
                     if (!resolver.Resolver.Chains && resolver.Resolver.Kind == "GraphQLResolver") {
                         argv.verbose && console.log(` - Function: ${resolver.Resolver.Name}...`)
-                        console.log(dataObject.Value)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { serverName: server.Name, functionName: resolver.Resolver.Name, serverName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver, serverName: server.Name, functionName: resolver.Resolver.Name, serverName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     }
                 })
