@@ -137,7 +137,7 @@ function objectFieldParse(obj, name) {
     } else if (obj.kind === "NamedType") {
         result = parseObjectType(obj.name.value, name, obj)
     } else if (obj.kind === "NonNullType") {
-        result = objectFieldParse(obj.type)
+        result = objectFieldParse(obj.type, name)
     } else if (obj.kind === "InputValueDefinition") {
         result = { Type: name, Name: obj.name.value, Value: obj.type.type.name.value }
     } else if (obj.kind === "FieldDefinition") {
@@ -237,18 +237,24 @@ function generateRandomValue(obj) {
     } else if (obj.Value === "String") {
         obj.Default = crypto.randomBytes(8).toString("hex")
         obj.isStringType = true
+        obj.isQuotedType = true
     } else if (obj.Value === "ID") {
         obj.Default = uuidv4()
         obj.isStringType = true
+        obj.isQuotedType = true
     } else if (obj.Value === "Boolean" || obj.Value === "Bool") {
         obj.Default = Math.random() >= 0.5 ? true : false
         obj.isBoolType = true
     } else if (obj.Value === "Int") {
+        obj.isIntType = true
         obj.Default = randomInteger(0, 9999)
     } else if (obj.Value === "Float") {
         obj.Default = randomNumber(0, 9999)
+        obj.isFloatType = true
     } else if (obj.Value === "DateTime") {
         obj.Default = new Date().toISOString()
+        obj.isDateTimeType = true
+        obj.isQuotedType = true
     } else {
         obj.isObjectType = true
     }
@@ -446,6 +452,7 @@ function hoganFlatter(rootObject) {
     })
     rootObject.Servers = convertToArrayWithNotation(rootObject.Servers)
     rootObject.Functions = convertToArrayWithNotation(rootObject.Functions)
+    rootObject.hasFunction = rootObject.Functions.length > 0 ? true : false
     rootObject.Events = convertToArrayWithNotation(rootObject.Events)
     rootObject.DataSources = convertToArrayWithNotation(rootObject.DataSources)
     rootObject.DataObjects = Object.keys(rootObject.DataObjects).map(kobj => {
