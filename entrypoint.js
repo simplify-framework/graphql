@@ -338,6 +338,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                     gqlConfig.GraphQLResolvers.map(cfg => {
                         let dataModel = { Definition: serverDef.Definition, Path: path.Path, ...resolver, ...resolver.Resolver, serverName: server.Name, stateName: resolver.Resolver.Name, DataValues: dataObject.Value, ...projectInfo }
                         dataModel = extendObjectValue(dataModel, "Definition", dataModel.Definition)
+                        dataModel = extendObjectValue(dataModel, "serverName", dataModel.serverName)
                         writeTemplateFile(`${templates}/${cfg.input}`, dataModel, outputDir, cfg.output, projectInfo.WriteConfig)
                     })
                     dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
