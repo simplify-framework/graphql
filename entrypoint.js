@@ -336,7 +336,9 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                     }).filter(obj => obj)
                     argv.verbose && console.log(`+ Resolver: ${resolver.Resolver.Name}...`)
                     gqlConfig.GraphQLResolvers.map(cfg => {
-                        writeTemplateFile(`${templates}/${cfg.input}`, { Path: path.Path, OperationId: resolver.OperationId, ...resolver.Resolver, DataType: resolver.DataType, DataSchema: resolver.DataSchema, serverName: server.Name, stateName: resolver.Resolver.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                        let dataModel = { Definition: serverDef.Definition, Path: path.Path, ...resolver, ...resolver.Resolver, serverName: server.Name, stateName: resolver.Resolver.Name, DataValues: dataObject.Value, ...projectInfo }
+                        dataModel = extendObjectValue(dataModel, "Definition", dataModel.Definition)
+                        writeTemplateFile(`${templates}/${cfg.input}`, dataModel, outputDir, cfg.output, projectInfo.WriteConfig)
                     })
                     dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
