@@ -261,6 +261,7 @@ function parseDefaultObjectValue(rootObject, vObj) {
         if (newValue.Type === "EnumObject") {
             vObj.Value.Default = newValue.Value[0].Value
             vObj.Value.isEnumObject = true
+            vObj.Value.isQuotedType = true
         } else {
             vObj.Value.Default = Object.keys(newValue.Value).map(k => {
                 let obj = {}
