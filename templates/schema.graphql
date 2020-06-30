@@ -4,6 +4,7 @@ enum AuthorType { JOURNALIST SCIENTIST }
 
 type Book
 {
+    id: ID!
     title: String
     author: Author!
     subauthor: Author!
@@ -36,7 +37,8 @@ input AuthorInput {
 # clients can execute, along with the return type for each. In this
 # case, the "books" query returns an array of zero or more Books (defined above).
 type Query
-    @GraphQLServer(Name: "StarwarServerQuery", Engine: LAMBDA) {
+    @GraphQLServer(Name: "StarwarServerQuery", Engine: LAMBDA)
+    @GraphQLDataSource(Name: "StarWarsQuery", Engine: CASSANDRA, Tables: [ { Name: "StarWarsBookCache", Key: "id", Index: "author" } ]) {
     listBooks: [Book]
         @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE HasApiKey: false })
         @GraphQLResolver(Name: "listBookFunction")
@@ -50,7 +52,11 @@ type Query
 }
 
 type Mutation
-    @GraphQLServer(Name: "StarwarServerMutation", Engine: LAMBDA, Options: { BurstLimit: 100 RateLimit: 10 }) {
+    @GraphQLServer(Name: "StarwarServerMutation", Engine: LAMBDA, Options: { BurstLimit: 100 RateLimit: 10 })
+    @GraphQLDataSource(Name: "StarWarsMutation", Engine: DYNAMODB, Tables: [ 
+        { Name: "StarWarsBook", Key: "id", Index: "author" }
+        { Name: "StarWarsAuthor", Key: "id", Index: "name" }
+    ]) {
     addBook(title: String, author: AuthorInput): [Book]
         @GraphQLEndpoint(Path: "/book/admin", Options: { AuthMode: SIGV4 HasApiKey: true })
         @GraphQLResolverSet(Name: "addBookFunctionSet", Chains: [

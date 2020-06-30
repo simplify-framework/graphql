@@ -295,7 +295,8 @@ function mainProcessor(typeDefs, schema, projectInfo) {
     rootObject.Servers.map(server => {
         argv.verbose && console.log(`* GraphQL Server: ${server.Name}...`)
         gqlConfig.GraphQLServers.map(cfg => {
-            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, serverName: server.Name, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
+            const dataSource = rootObject.DataSources.find(ds => ds.Definition === server.Definition)
+            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, serverName: server.Name, DataSource: dataSource, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
         })
         rootObject.DataObjects.map(data => {
             argv.verbose && console.log(`   Data Object: ${data.Name}...`)
@@ -322,7 +323,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                 return parseDefaultObjectValue(rootObject, v)
             }).filter(obj => obj)
             dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
-            gqlConfig.RemoteFunctions.map(cfg => {
+            gqlConfig.Executions.map(cfg => {
                 writeTemplateFile(`${templates}/${cfg.input}`, { ...func, serverName: server.Name, functionName: func.FunctionName, functionNameSnake: func.FunctionNameSnake, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
         })

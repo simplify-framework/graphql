@@ -69,6 +69,8 @@ function extendObjectValue(obj, key, value) {
         obj[key + "Pascal"] = value.toPascalCase()
         obj[key + "Camel"] = value.toCamelCase()
         obj[key + "Snake"] = value.toSnakeCase()
+        obj[key + "Lowercase"] = value.toLowerCase()
+        obj[key + "Uppercase"] = value.toUpperCase()
         obj[key + 'Underscore'] = value.toUnderscore()
     } else if (typeof (value) === 'number') {
         obj[key + 'Number'] = (value || 0)
@@ -346,6 +348,11 @@ function schemaParser(typeDefs) {
                 } else if (obj.Kind === "GraphQLDataSource") {
                     dataSourceName = dataSourceName !== obj.Name ? obj.Name : dataSourceName
                     if (!rootObject.DataSources[dataSourceName]) {
+                        obj.Tables = convertToArrayWithNotation(obj.Tables)
+                        if (obj.Engine === 'DYNAMODB') obj.isDynamoDB = true
+                        if (obj.Engine === 'CASSANDRA') obj.isCassandra = true
+                        if (obj.Engine === 'MONGODB') obj.isMongoDB = true
+                        obj = extendObjectValue(obj, "Engine", obj.Engine)
                         rootObject.DataSources[dataSourceName] = { ...obj, Parameters: defs.Parameters }
                     } else {
                         console.error(` * Duplicate DataSource: \`${dataSourceName}\` on ${defs.Name.toUpperCase()}`)
