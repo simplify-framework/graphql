@@ -78,7 +78,7 @@ function extendObjectValue(obj, key, value) {
         obj[key + 'Boolean'] = (value || false)
     } else if (typeof (value) === 'object') {
         if (Array.isArray(value)) {
-            obj[key + 'Array']  = convertArray(value || [])
+            obj[key + 'Array'] = convertArray(value || [])
         } else {
             obj[key + 'Object'] = (value || {})
         }
@@ -117,7 +117,7 @@ function objectValueParse(obj) {
 }
 
 function parseObjectType(obj, name, def) {
-    if (obj === "DateTime" || obj === "List" || obj === "String" || obj === "ID" || obj === "Boolean" ||  obj === "Int" || obj === "Float") {
+    if (obj === "DateTime" || obj === "List" || obj === "String" || obj === "ID" || obj === "Boolean" || obj === "Int" || obj === "Float") {
         obj = { Name: name, Value: obj, isScalarType: true }
         obj = generateRandomValue(obj)
     } else {
@@ -155,7 +155,7 @@ function objectFieldParse(obj, name) {
     } else {
         result = obj.value
     }
-    
+
     return result || undefined
 }
 
@@ -229,7 +229,7 @@ function generateRandomValue(obj) {
     }
     if (obj.isListType) {
         if (obj.Value == "String") {
-            obj.Default = convertToArrayWithNotation([ crypto.randomBytes(8).toString("hex"), crypto.randomBytes(8).toString("hex"), crypto.randomBytes(8).toString("hex") ])
+            obj.Default = convertToArrayWithNotation([crypto.randomBytes(8).toString("hex"), crypto.randomBytes(8).toString("hex"), crypto.randomBytes(8).toString("hex")])
             obj.isListStringType = true
         } else {
             obj.Default = convertToArrayWithNotation([obj.Value])
@@ -295,7 +295,6 @@ function getResolverRuntime(obj) {
 
 function schemaParser(typeDefs) {
     let rootObject = { Servers: {}, Events: {}, DataSources: {}, DataInputs: {}, DataObjects: {}, EnumObjects: {} }
-    let dataSourceName = null
     let serverName = null
     let eventName = null
 
@@ -332,7 +331,7 @@ function schemaParser(typeDefs) {
                         obj.Options.RateLimit = obj.Options.RateLimit || 10
                         obj.Options.QuotaLimit = obj.Options.QuotaLimit || 100
                         obj.Options.QuotaUnit = obj.Options.QuotaUnit || 'DAY'
-                        rootObject.Servers[serverName].Definitions = [ { Definition: obj.Definition } ]
+                        rootObject.Servers[serverName].Definitions = [{ Definition: obj.Definition }]
                     } else {
                         rootObject.Servers[serverName].Definitions.push({ Definition: obj.Definition })
                     }
@@ -346,17 +345,18 @@ function schemaParser(typeDefs) {
                         process.exit(-1)
                     }
                 } else if (obj.Kind === "GraphQLDataSource") {
-                    dataSourceName = dataSourceName !== obj.Name ? obj.Name : dataSourceName
-                    if (!rootObject.DataSources[dataSourceName]) {
+                    const dataSourceKey = `${serverName}-${obj.Engine}`
+                    if (!rootObject.DataSources[dataSourceKey]) {
                         obj.Tables = convertToArrayWithNotation(obj.Tables)
                         if (obj.Engine === 'DYNAMODB') obj.isDynamoDB = true
                         if (obj.Engine === 'CASSANDRA') obj.isCassandra = true
                         if (obj.Engine === 'MONGODB') obj.isMongoDB = true
                         obj = extendObjectValue(obj, "Engine", obj.Engine)
-                        rootObject.DataSources[dataSourceName] = { ...obj, Parameters: defs.Parameters }
+                        rootObject.DataSources[dataSourceKey] = { ...obj, Parameters: defs.Parameters }
                     } else {
-                        console.error(` * Duplicate DataSource: \`${dataSourceName}\` on ${defs.Name.toUpperCase()}`)
-                        process.exit(-1)
+                        const mergedTables = [...rootObject.DataSources[dataSourceKey].Tables, ...obj.Tables]
+                        rootObject.DataSources[dataSourceKey].Tables = mergedTables.filter((item, pos, ary) => (!pos || item.Name != ary[pos - 1].Name))
+                        rootObject.DataSources[dataSourceKey].Tables = convertToArrayWithNotation(rootObject.DataSources[dataSourceKey].Tables)
                     }
                 } else if (obj.Kind === "GraphQLResolver") {
                     const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == obj.Definition)
@@ -418,19 +418,26 @@ function schemaParser(typeDefs) {
                         })
                     }
                 })
-                rootObject.Servers[serverName].Definitions = convertToArrayWithNotation(rootObject.Servers[serverName].Definitions) 
+                rootObject.Servers[serverName].Definitions = convertToArrayWithNotation(rootObject.Servers[serverName].Definitions)
             }
         }
     })
     return rootObject
 }
 
-function hoganFlatter(rootObject) { 
+function hoganFlatter(rootObject) {
     rootObject.Functions = []
     rootObject.Servers = convertToArrayWithNotation(rootObject.Servers)
+    rootObject.DataSources = convertToArrayWithNotation(rootObject.DataSources)
     rootObject.Servers = rootObject.Servers.map(server => {
         server.Definitions = server.Definitions.map(serverDef => {
             let pathsArray = convertToArrayWithNotation(serverDef.Paths)
+            const dataTables = rootObject.DataSources.find(ds => serverDef.Definition == ds.Definition && ds.isDynamoDB)
+            const keySpaces = rootObject.DataSources.find(ds => serverDef.Definition == ds.Definition && ds.isCassandra)
+            const documents = rootObject.DataSources.find(ds => serverDef.Definition == ds.Definition && ds.isMongoDB)
+            server.DataTables = dataTables ? dataTables.Tables : []
+            server.KeySpaces = keySpaces ? keySpaces.Tables : []
+            server.Documents = documents ? documents.Tables : []
             pathsArray = pathsArray.map(path => {
                 path.Resolvers.map(resolver => {
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
@@ -450,7 +457,7 @@ function hoganFlatter(rootObject) {
                             }
                         }
                     })
-                })                
+                })
                 return { ...path, Resolvers: convertToArrayWithNotation(path.Resolvers) }
             })
             return { ...serverDef, Paths: convertToArrayWithNotation(pathsArray) }
@@ -461,7 +468,7 @@ function hoganFlatter(rootObject) {
     rootObject.Functions = convertToArrayWithNotation(rootObject.Functions)
     rootObject.hasFunction = rootObject.Functions.length > 0 ? true : false
     rootObject.Events = convertToArrayWithNotation(rootObject.Events)
-    rootObject.DataSources = convertToArrayWithNotation(rootObject.DataSources)
+    
     rootObject.DataObjects = Object.keys(rootObject.DataObjects).map(kobj => {
         return {
             UserType: ["Query", "Mutation"].indexOf(kobj) === -1,
@@ -470,7 +477,6 @@ function hoganFlatter(rootObject) {
             Value: rootObject.DataObjects[kobj]
         }
     })
-    rootObject.DataSources = convertToArrayWithNotation(rootObject.DataSources)
 
     rootObject.DataInputs = Object.keys(rootObject.DataInputs).map(kinput => {
         return {

@@ -13,7 +13,7 @@ const CERROR = '\x1b[31m'
 const CRESET = '\x1b[0m'
 const CPROMPT = '\x1b[33m'
 
-const { schemaParser, hoganFlatter, extendObjectValue } = require('./transformer');
+const { schemaParser, hoganFlatter, extendObjectValue, convertToArrayWithNotation } = require('./transformer');
 const transformer = require('./transformer');
 
 function creatFileOrPatch(filePath, newFileData, encoding, config) {
@@ -289,14 +289,26 @@ function mainProcessor(typeDefs, schema, projectInfo) {
     const rootObject = hoganFlatter(schemaParser(typeDefs))
     const outputDir = projectInfo.ProjectOutput || './StarWars'
     argv.verbose && console.log("Generating Verbal GASM Design Language... (design.txt)")
+    rootObject.DataTables = []
+    rootObject.DataSources.map(ds => {
+        if (ds.isDynamoDB) {
+            const mergedTables = [ ...rootObject.DataTables, ...ds.Tables ]
+            rootObject.DataTables = mergedTables.filter((item, pos, ary) => (!pos || item.Name != ary[pos - 1].Name))
+            rootObject.DataTables = transformer.convertToArrayWithNotation(rootObject.DataTables)
+            rootObject.DataTables.isDynamoDB = ds.isDynamoDB
+        }
+    })
     gqlConfig.Deployments.map(cfg => {
         writeTemplateFile(`${templates}/${cfg.input}`, { ...rootObject, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
     })
     rootObject.Servers.map(server => {
         argv.verbose && console.log(`* GraphQL Server: ${server.Name}...`)
-        gqlConfig.GraphQLServers.map(cfg => {
-            const dataSource = rootObject.DataSources.find(ds => ds.Definition === server.Definition)
-            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, serverName: server.Name, DataSource: dataSource, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
+        let dataSources = server.Definitions ?
+            rootObject.DataSources.filter(ds => server.Definitions.find(def => ds.Definition === def.Definition)) :
+            rootObject.DataSources.filter(ds => server.Definition == ds.Definition)
+        dataSources = transformer.convertToArrayWithNotation(dataSources)
+        gqlConfig.GraphQLServers.map(cfg => {    
+            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, serverName: server.Name, DataSources: dataSources, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
         })
         rootObject.DataObjects.map(data => {
             argv.verbose && console.log(`   Data Object: ${data.Name}...`)
