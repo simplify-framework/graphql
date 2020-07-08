@@ -294,8 +294,8 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         if (ds.isDynamoDB) {
             const mergedTables = [...rootObject.DataTables, ...ds.Tables]
             rootObject.DataTables = mergedTables.sort((a, b) => a.Name < b.Name ? 1 : -1).filter((item, pos, ary) => {
-                item.isReadWrite = item.Access === "READ_WRITE"
-                item.isReadOnly = item.Access === "READ_ONLY"
+                item.isReadWrite = typeof item.Access === 'undefined' ? false : item.Access === "READ_WRITE"
+                item.isReadOnly = typeof item.Access === 'undefined' ? true : item.Access === "READ_ONLY"
                 return (!pos || item.Name != ary[pos - 1].Name)
             })
             rootObject.DataTables.isDynamoDB = ds.isDynamoDB
