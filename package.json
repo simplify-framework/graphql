@@ -1,6 +1,6 @@
 {
   "name": "simplify-graphql",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "Simplify graphql-serverless architecture model (GSAM)",
   "main": "entrypoint.js",
   "bin": {
