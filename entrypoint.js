@@ -19,7 +19,7 @@ const transformer = require('./transformer');
 function creatFileOrPatch(filePath, newFileData, encoding, config) {
     try {
         const inputFileName = path.basename(config.input)
-        if (fs.existsSync(filePath)) {            
+        if (fs.existsSync(filePath)) {
             let ignoreOverridenFiles = [
                 ".env.mustache",
                 ".babelrc.mustache",
@@ -34,15 +34,15 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 "docker-entrypoint.mustache",
                 "Dockerfile.mustache",
                 "README.mustache"
-            ]            
+            ]
             if (config.ignores) {
-                config.ignores.split(';').forEach(function(ignore) {
+                config.ignores.split(';').forEach(function (ignore) {
                     const parts = ignore.split('.')
                     const ignoredFile = parts.splice(0, parts.length - 1).join('.') + '.mustache'
                     ignoreOverridenFiles.push(ignoredFile)
                 })
             }
-            if (ignoreOverridenFiles.indexOf(inputFileName)>=0) {
+            if (ignoreOverridenFiles.indexOf(inputFileName) >= 0) {
                 if (!config.override) {
                     console.log(`   * ${CPROMPT}ignore${CRESET}`, filePath)
                     return undefined
@@ -67,9 +67,9 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 var lastRemoved = false
                 var index = 0
                 var content = diff.map(function (part) {
-                    if (++index == (diff.length -1) && part.removed) { lastRemoved = true }
-                    var newcontent = part.removed ? removeYourLine(part.value, index == (diff.length -1)) : (part.added ? addNewLine(part.value, lastRemoved): part.value)
-                    if (part.added) { lastAdded = true; lastRemoved = false;  }
+                    if (++index == (diff.length - 1) && part.removed) { lastRemoved = true }
+                    var newcontent = part.removed ? removeYourLine(part.value, index == (diff.length - 1)) : (part.added ? addNewLine(part.value, lastRemoved) : part.value)
+                    if (part.added) { lastAdded = true; lastRemoved = false; }
                     if (part.removed) { lastAdded = false; lastRemoved = true; }
                     return newcontent
                 }).join('');
@@ -104,7 +104,7 @@ function buildTemplateFile(data, tplFile) {
 }
 
 function writeTemplateFile(tplFile, data, outputDir, outputFile, writeConfig) {
-    const template = Hogan.compile(JSON.stringify({ input: tplFile, output: outputFile}));
+    const template = Hogan.compile(JSON.stringify({ input: tplFile, output: outputFile }));
     const config = JSON.parse(template.render(data, {}));
     const dataFile = buildTemplateFile(data, config.input)
     const outputPath = path.dirname(path.join(outputDir, config.output))
@@ -292,22 +292,24 @@ function mainProcessor(typeDefs, schema, projectInfo) {
     rootObject.DataTables = []
     rootObject.DataSources.map(ds => {
         if (ds.isDynamoDB) {
-            const mergedTables = [ ...rootObject.DataTables, ...ds.Tables ]
-            rootObject.DataTables = mergedTables.filter((item, pos, ary) => (!pos || item.Name != ary[pos - 1].Name))
-            rootObject.DataTables = transformer.convertToArrayWithNotation(rootObject.DataTables)
+            const mergedTables = [...rootObject.DataTables, ...ds.Tables]
+            rootObject.DataTables = mergedTables.sort((a, b) => a.Name < b.Name ? 1 : -1).filter((item, pos, ary) => {
+                item.isReadWrite = item.Access === "READ_WRITE"
+                item.isReadOnly = item.Access === "READ_ONLY"
+                return (!pos || item.Name != ary[pos - 1].Name)
+            })
             rootObject.DataTables.isDynamoDB = ds.isDynamoDB
         }
     })
+    rootObject.DataTables = transformer.convertToArrayWithNotation(rootObject.DataTables)
     gqlConfig.Deployments.map(cfg => {
         writeTemplateFile(`${templates}/${cfg.input}`, { ...rootObject, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
     })
     rootObject.Servers.map(server => {
         argv.verbose && console.log(`* GraphQL Server: ${server.Name}...`)
-        let dataSources = server.Definitions ?
-            rootObject.DataSources.filter(ds => server.Definitions.find(def => ds.Definition === def.Definition)) :
-            rootObject.DataSources.filter(ds => server.Definition == ds.Definition)
+        let dataSources = rootObject.DataSources.filter(ds => ds.Definition.includes(server.Definition))
         dataSources = transformer.convertToArrayWithNotation(dataSources)
-        gqlConfig.GraphQLServers.map(cfg => {    
+        gqlConfig.GraphQLServers.map(cfg => {
             writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, serverName: server.Name, DataSources: dataSources, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
         })
         rootObject.DataObjects.map(data => {
@@ -330,7 +332,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         })
         rootObject.Functions.map(func => {
             argv.verbose && console.log(`   Remote Function: ${func.FunctionName}...`)
-            const dataObject = rootObject.DataObjects.find(obj => obj.Name ==func.DataSchema)
+            const dataObject = rootObject.DataObjects.find(obj => obj.Name == func.DataSchema)
             dataObject.Value.map(v => {
                 return parseDefaultObjectValue(rootObject, v)
             }).filter(obj => obj)
@@ -343,7 +345,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
             serverDef.Paths.map(path => {
                 path.Resolvers.map(resolver => {
                     resolver.isResultListType = resolver.DataType == "ListType"
-                    const dataObject = rootObject.DataObjects.find(obj => obj.Name ==resolver.DataSchema)
+                    const dataObject = rootObject.DataObjects.find(obj => obj.Name == resolver.DataSchema)
                     dataObject.Value.map(v => {
                         return parseDefaultObjectValue(rootObject, v)
                     }).filter(obj => obj)
@@ -395,7 +397,7 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log(` - Diff file generation is ${argv.diff ? 'on (remove option --diff to turn off)' : 'off (use option --diff to turn on)'}`)
         console.log(` - Override custom code is ${argv.override ? 'on (remove option --override to turn off)' : 'off (use option --override to turn on)'}`)
         const { err, projectInfo } = runCommandLine()
-        console.log(` - Finish code generation ${!err ? `with NO error. See ${argv.output=="./"?"current folder":argv.output} for your code!` : err}`);
+        console.log(` - Finish code generation ${!err ? `with NO error. See ${argv.output == "./" ? "current folder" : argv.output} for your code!` : err}`);
         if (!err && projectInfo) {
             console.log(`\n * Follow these commands to walk throught your project: (${projectInfo.ProjectName})\n`)
             console.log(` 1. Setup AWS Account\t: ${CBEGIN}bash .simplify-graphql/setup.sh --profile MASTER ${CRESET}`)

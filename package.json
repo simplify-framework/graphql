@@ -34,7 +34,7 @@
     "hogan.js": "^3.0.2",
     "mkdirp": "^1.0.4",
     "readline-sync": "^1.4.10",
-    "simplify-templates": "^0.1.20",
+    "simplify-templates": "^0.1.21",
     "uuid": "^8.1.0"
   }
 }

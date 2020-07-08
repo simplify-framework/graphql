@@ -50,15 +50,21 @@ function convertToArrayWithNotation(arrayOrObject, debug) {
         }
     } else {
         if (typeof arrayOrObject === 'object') {
-            let resultArr = []
-            Object.keys(arrayOrObject).map((k, i) => {
-                resultArr.push(arrayOrObject[k])
-                resultArr[i]['-first'] = (i === 0);
-                resultArr[i]['-last'] = (i === arrayOrObject.length - 1);
-                resultArr[i].hasMore = (i < arrayOrObject.length - 1);
-            })
-            arrayOrObject = resultArr
-        } else { arrayOrObject.isEmpty = true; }
+            if (Array.isArray(arrayOrObject) && arrayOrObject.length === 0) {
+                arrayOrObject = { isEmpty: true }
+            } else {
+                let resultArr = []
+                Object.keys(arrayOrObject).map((k, i) => {
+                    resultArr.push(arrayOrObject[k])
+                    resultArr[i]['-first'] = (i === 0);
+                    resultArr[i]['-last'] = (i === arrayOrObject.length - 1);
+                    resultArr[i].hasMore = (i < arrayOrObject.length - 1);
+                })
+                arrayOrObject = resultArr
+            }
+        } else {
+            arrayOrObject = { isEmpty: true }
+        }
     }
     return arrayOrObject;
 }
@@ -334,6 +340,7 @@ function schemaParser(typeDefs) {
                         rootObject.Servers[serverName].Definitions = [{ Definition: obj.Definition }]
                     } else {
                         rootObject.Servers[serverName].Definitions.push({ Definition: obj.Definition })
+                        rootObject.Servers[serverName].Definition = rootObject.Servers[serverName].Definitions.map(d => d.Definition).join('')
                     }
                 } else if (obj.Kind === "GraphQLEvent") {
                     eventName = eventName !== obj.Name ? obj.Name : eventName
@@ -353,9 +360,12 @@ function schemaParser(typeDefs) {
                         if (obj.Engine === 'MONGODB') obj.isMongoDB = true
                         obj = extendObjectValue(obj, "Engine", obj.Engine)
                         rootObject.DataSources[dataSourceKey] = { ...obj, Parameters: defs.Parameters }
+                        rootObject.DataSources[dataSourceKey].Definitions = [ obj.Definition ]
                     } else {
+                        rootObject.DataSources[dataSourceKey].Definitions.push(obj.Definition)
+                        rootObject.DataSources[dataSourceKey].Definition = rootObject.DataSources[dataSourceKey].Definitions.join('')
                         const mergedTables = [...rootObject.DataSources[dataSourceKey].Tables, ...obj.Tables]
-                        rootObject.DataSources[dataSourceKey].Tables = mergedTables.filter((item, pos, ary) => (!pos || item.Name != ary[pos - 1].Name))
+                        rootObject.DataSources[dataSourceKey].Tables = mergedTables.sort((a, b) => a.Name < b.Name ? 1 : -1).filter((item, pos, ary) => (!pos || item.Name != ary[pos - 1].Name))
                         rootObject.DataSources[dataSourceKey].Tables = convertToArrayWithNotation(rootObject.DataSources[dataSourceKey].Tables)
                     }
                 } else if (obj.Kind === "GraphQLResolver") {
@@ -432,12 +442,12 @@ function hoganFlatter(rootObject) {
     rootObject.Servers = rootObject.Servers.map(server => {
         server.Definitions = server.Definitions.map(serverDef => {
             let pathsArray = convertToArrayWithNotation(serverDef.Paths)
-            const dataTables = rootObject.DataSources.find(ds => serverDef.Definition == ds.Definition && ds.isDynamoDB)
-            const keySpaces = rootObject.DataSources.find(ds => serverDef.Definition == ds.Definition && ds.isCassandra)
-            const documents = rootObject.DataSources.find(ds => serverDef.Definition == ds.Definition && ds.isMongoDB)
-            server.DataTables = dataTables ? dataTables.Tables : []
-            server.KeySpaces = keySpaces ? keySpaces.Tables : []
-            server.Documents = documents ? documents.Tables : []
+            const dataTables = rootObject.DataSources.find(ds => ds.Definition.includes(serverDef.Definition) && ds.isDynamoDB)
+            const keySpaces = rootObject.DataSources.find(ds => ds.Definition.includes(serverDef.Definition) && ds.isCassandra)
+            const documents = rootObject.DataSources.find(ds => ds.Definition.includes(serverDef.Definition) && ds.isMongoDB)
+            server.DataTables = convertToArrayWithNotation(dataTables ? dataTables.Tables : [])
+            server.KeySpaces = convertToArrayWithNotation(keySpaces ? keySpaces.Tables : [])
+            server.Documents = convertToArrayWithNotation(documents ? documents.Tables : [])
             pathsArray = pathsArray.map(path => {
                 path.Resolvers.map(resolver => {
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
@@ -468,7 +478,7 @@ function hoganFlatter(rootObject) {
     rootObject.Functions = convertToArrayWithNotation(rootObject.Functions)
     rootObject.hasFunction = rootObject.Functions.length > 0 ? true : false
     rootObject.Events = convertToArrayWithNotation(rootObject.Events)
-    
+
     rootObject.DataObjects = Object.keys(rootObject.DataObjects).map(kobj => {
         return {
             UserType: ["Query", "Mutation"].indexOf(kobj) === -1,
