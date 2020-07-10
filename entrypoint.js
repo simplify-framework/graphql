@@ -235,7 +235,7 @@ function runCommandLine() {
             config.writes.merge = true;
         }
         if (typeof argv.ignores !== 'undefined') {
-            config.writes.ignores = true;
+            config.writes.ignores = argv.ignores;
         }
         if (typeof argv.override !== 'undefined') {
             config.writes.override = true;
