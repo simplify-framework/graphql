@@ -21,7 +21,6 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
         const inputFileName = path.basename(config.input)
         if (fs.existsSync(filePath)) {
             let ignoreOverridenFiles = [
-                ".env.mustache",
                 ".babelrc.mustache",
                 ".gitignore.mustache",
                 "package-src.mustache",
@@ -29,11 +28,11 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 "server-input.mustache",
                 "function-input.mustache",
                 "index-src.mustache",
+                "tests.spec.mustache",
                 "webpack.config.mustache",
                 "webpack.config.layer.mustache",
                 "docker-entrypoint.mustache",
-                "Dockerfile.mustache",
-                "README.mustache"
+                "Dockerfile.mustache"
             ]
             if (config.ignores) {
                 config.ignores.split(';').forEach(function (ignore) {
@@ -383,11 +382,15 @@ function mainProcessor(typeDefs, schema, projectInfo) {
     })
 }
 
+const showBanner = function() {
+    console.log("╓───────────────────────────────────────────────────────────────╖")
+    console.log(`║              Simplify Framework  - GraphQL (${require('./package.json').version})           ║`)
+    console.log("╙───────────────────────────────────────────────────────────────╜\n")
+}
+
 mkdirp(path.resolve(argv.output)).then(function () {
     if (argv._.length && argv._[0] === 'template') {
-        console.log("╓───────────────────────────────────────────────────────────────╖")
-        console.log("║               Simplify Framework  - GraphQL                   ║")
-        console.log("╙───────────────────────────────────────────────────────────────╜")
+        showBanner()
         const outputSchema = path.resolve(argv.output, 'schema.graphql')
         const sampleName = path.join(__dirname, 'templates', (argv.input || 'schema') + '.graphql')
         fs.writeFileSync(outputSchema, fs.readFileSync(sampleName, 'utf8'), 'utf8')
@@ -398,26 +401,32 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log(` - Sample project config ${projectInfo}`);
         process.exit(0)
     } else {
-        console.log("╓───────────────────────────────────────────────────────────────╖")
-        console.log("║               Simplify Framework  - GraphQL                   ║")
-        console.log("╙───────────────────────────────────────────────────────────────╜")
-        console.log(` - Automatic code merge is ${argv.merge ? 'on (remove option --merge to turn off)' : 'off (use option --merge to turn on)'}`)
-        console.log(` - Diff file generation is ${argv.diff ? 'on (remove option --diff to turn off)' : 'off (use option --diff to turn on)'}`)
-        console.log(` - Override custom code is ${argv.override ? 'on (remove option --override to turn off)' : 'off (use option --override to turn on)'}`)
         const { err, projectInfo } = runCommandLine()
         console.log(` - Finish code generation ${!err ? `with NO error. See ${argv.output == "./" ? "current folder" : argv.output} for your code!` : err}`);
         if (!err && projectInfo) {
-            console.log(`\n * Follow these commands to walk throught your project: (${projectInfo.ProjectName})\n`)
-            console.log(` 1. Setup AWS Account\t: ${CBEGIN}bash .simplify-graphql/setup.sh --profile MASTER ${CRESET}`)
-            console.log(` 2. Goto Project Dir\t: ${CBEGIN}cd ${argv.output} ${CRESET}`)
-            console.log(` 3. Install Packages\t: ${CBEGIN}npm install ${CRESET}`)
-            console.log(` 4. Deploy AWS Stacks\t: ${CBEGIN}npm run stack-deploy ${CRESET}`)
-            console.log(` 5. Push Code Functions\t: ${CBEGIN}npm run push-code ${CRESET}`)
-            console.log(` 6. Update Environments\t: ${CBEGIN}npm run push-update ${CRESET}`)
-            console.log(` 7. Monitor Metrics\t: ${CBEGIN}npm run monitor-metric ${CRESET}`)
-            console.log(` 8. Destroy AWS Stacks\t: ${CBEGIN}npm run stack-destroy ${CRESET}`)
-            console.log(` 9. Cleanup AWS Account\t: ${CBEGIN}bash .simplify-graphql/cleanup.sh --profile MASTER ${CRESET}\n`)
-            console.log(`\n * Create or switch environment with option --env=ENVIRONMENT_NAME\n`);
+            showBanner()
+            console.log(` * Follow these commands to walk throught your project: (${projectInfo.ProjectName})\n`)
+            console.log(`   1. Setup AWS Account  \t: ${CBEGIN}npm run setup-account ${CRESET}`)
+            console.log(`   2. Install Packages   \t: ${CBEGIN}npm install ${CRESET}`)
+            console.log(`   3. Deploy AWS Stacks  \t: ${CBEGIN}npm run stack-deploy ${CRESET}`)
+            console.log(`   4. Push Code Functions\t: ${CBEGIN}npm run push-code ${CRESET}`)
+            console.log(`   5. Run your test specs\t: ${CBEGIN}npm run test ${CRESET}`)
+            console.log(`   6. Update Environments\t: ${CBEGIN}npm run push-update ${CRESET}`)
+            console.log(`   7. Monitor Metrics    \t: ${CBEGIN}npm run monitor-metric ${CRESET}`)
+            console.log(`   8. Destroy AWS Stacks \t: ${CBEGIN}npm run stack-destroy ${CRESET}`)
+            console.log(`   9. Cleanup AWS Account\t: ${CBEGIN}npm run cleanup-account ${CRESET}\n`)
+            
+            console.log(`   Project Id\t: ${projectInfo.ProjectId} `);
+            console.log(`   Account Id\t: ${projectInfo.DeploymentAccount} `);
+            console.log(`   Profile\t: ${projectInfo.DeploymentProfile} `);
+            console.log(`   Bucket\t: ${projectInfo.DeploymentBucket} `);
+            console.log(`   Region\t: ${projectInfo.DeploymentRegion} `);
+            console.log(`   Environment\t: ${projectInfo.DeploymentEnv} \n`);
+
+            console.log(` * Create NEW environment: simplify-graphql -i schema.graphql --env=NAME\n`);
+            console.log(` - Automatic code merge is ${argv.merge ? 'on (remove option --merge to turn off)' : 'off (use option --merge to turn on)'}`)
+            console.log(` - Diff file generation is ${argv.diff ? 'on (remove option --diff to turn off)' : 'off (use option --diff to turn on)'}`)
+            console.log(` - Override custom code is ${argv.override ? 'on (remove option --override to turn off)' : 'off (use option --override to turn on)'} \n`)    
         }
     }
 }, function (err) {

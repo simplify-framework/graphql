@@ -1,6 +1,6 @@
 # Simplify Framework - GraphQL 
 
-A GraphQL Serverless Architecture Model (GSAM) - Base on amazing [Appollo GraphQL](https://www.apollographql.com/) server project. We help you generating a boilerplate GraphQL based project that immediately can deploy on AWS Lambda function behind an API Gateway as a serverless model. What do you think? You can design GraphQL resolvers as a State Machine (aka AWS Step Functions) inside your project.
+A GraphQL Serverless Architecture Model (GSAM) - Base on amazing [Apollo GraphQL](https://www.apollographql.com/) server project. We help you generating a boilerplate GraphQL based project that immediately can deploy on AWS Lambda function behind an API Gateway as a serverless model. What do you think? You can design GraphQL resolvers as a State Machine (aka AWS Step Functions) inside your project.
 
 ![DevOps CI/CD](https://github.com/simplify-framework/graphql/workflows/DevOps%20CI/CD/badge.svg)
 ![NPM Downloads](https://img.shields.io/npm/dw/simplify-graphql)
@@ -37,17 +37,17 @@ Goto [AWS Setup Credentials](https://docs.aws.amazon.com/sdk-for-java/v1/develop
     - What is your Endpoint ApiKey? (a4d0c3836b6ab16ece5cabf1887128ff6bddf962): [Enter]
     - Finish code generation with NO error. See current folder for your code!
 
-    * Follow these commands to walk throught your project: (starwars)
+    * Follow these commands to walk throught your project: (MyStarWars)
 
-    1. Setup AWS Account   : bash .simplify-graphql/aws-setup.sh 
-    2. Goto Project Dir    : cd ./ 
-    3. Install Packages    : npm install 
-    4. Deploy AWS Stacks   : npm run stack-deploy 
-    5. Push Code Functions : npm run push-code 
-    6. Update Environments : npm run push-update 
-    7. Monitor Functions   : npm run monitor-metric
-    8. Destroy AWS Stacks  : npm run stack-destroy 
-    9. Cleanup AWS Account : bash .simplify-graphql/aws-cleanup.sh 
+   1. Setup AWS Account         : npm run setup-account 
+   2. Install Packages          : npm install 
+   3. Deploy AWS Stacks         : npm run stack-deploy 
+   4. Push Code Functions       : npm run push-code 
+   5. Run your test specs       : npm run test 
+   6. Update Environments       : npm run push-update 
+   7. Monitor Metrics           : npm run monitor-metric 
+   8. Destroy AWS Stacks        : npm run stack-destroy 
+   9. Cleanup AWS Account       : npm run cleanup-account 
 
 ## Security & Operation commands
 
@@ -108,42 +108,53 @@ curl -X POST -d '{ "operationName": "GetBooksAndAuthors", "variables": {}, "quer
 
 ## The StarWars Verbal Architecture Model
 ```
-* @GraphQLServer Name=graphApiGatewayQuery run on LAMBDA
+### Verbal Architecture Design - GSAM ###
+### Copyright@2020 Simplify Framework ###
+
+* @GraphQLServer Name=StarwarServerQuery run on LAMBDA
     FOR EVERY (Query)
         POST /query using NONE authorization with ApiKey=false
-            listBooks [] => ListType() will execute @GraphQLResolver=listBookFunction
-            getBook [title=String] => NamedType() will execute @GraphQLResolver=getBookFunction
-* @GraphQLServer Name=graphApiGatewayMutation run on LAMBDA
+            listBooks [StarwarServerQuery=GraphQLEndpoint, ] => ListType() will execute @GraphQLResolver=listBookFunction
+            getBook [title=String] => NamedType() will execute @GraphQLResolverSet=getBookFunction
+                    Function=checkBookExisted() onSuccess=getExistingBook() onFailure=doneGetBook() RetryOnFailure=3
+                    Function=getExistingBook() onSuccess=doneGetBook() onFailure=ERROR() RetryOnFailure=
+                    Function=doneGetBook() onSuccess=DONE() onFailure=ERROR() RetryOnFailure=
+        * StarWarsBookCacheSpace HAS KEY=id AND INDEX=author
+    
+* @GraphQLServer Name=StarwarServerMutation run on LAMBDA
     FOR EVERY (Mutation)
-        POST /book/admin using SIGV4 authorization with ApiKey=true
+        POST /book/admin using SIGV4 authorization with ApiKey=false
             addBook [title=String, author=AuthorInput] => ListType() will execute @GraphQLResolverSet=addBookFunctionSet
                     Function=checkBookExisted() onSuccess=addNewBook() onFailure=doneNewBook() RetryOnFailure=3
                     Function=addNewBook() onSuccess=doneNewBook() onFailure=errorNewBook() RetryOnFailure=
-                    Function=doneNewBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
-                    Function=errorNewBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
+                    Function=doneNewBook() onSuccess=DONE() onFailure=ERROR() RetryOnFailure=
+                    Function=errorNewBook() onSuccess=DONE() onFailure=ERROR() RetryOnFailure=
             deleteBook [title=String, author=AuthorInput] => NamedType() will execute @GraphQLResolver=deleteBookFunction
-        POST /book/user using COGNITO authorization with ApiKey=
+        POST /book/user using COGNITO authorization with ApiKey=false
             readBook [title=String, author=AuthorInput] => NamedType() will execute @GraphQLResolver=readBookFunction
                     Method=checkBookPaid() onSuccess=readNewBook() onFailure=errorPaidBook() RetryOnFailure=
-                    Method=readNewBook() onSuccess=doneReadBook() onFailure=DONE() RetryOnFailure=
-                    Method=doneReadBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
-                    Method=errorPaidBook() onSuccess=DONE() onFailure=DONE() RetryOnFailure=
+                    Method=readNewBook() onSuccess=doneReadBook() onFailure=ERROR() RetryOnFailure=
+                    Method=doneReadBook() onSuccess=DONE() onFailure=ERROR() RetryOnFailure=
+                    Method=errorPaidBook() onSuccess=DONE() onFailure=ERROR() RetryOnFailure=
             likeBook [title=String, author=AuthorInput] => NamedType() will execute @GraphQLResolver=likeBookFunction
+        * StarWarsBookTable HAS KEY=id AND INDEX=author
+        * StarWarsAuthorTable HAS KEY=id AND INDEX=name
+    
 
-* Will execute Function=onBookSchedule on EVENT_RULE=scheduleOnBookEvent(every(10 mins)) => accessible to [Book] with Access=READ_ONLY
-* Will execute Function=onAuthorSchedule on TABLE_STORAGE=starwarsBookTable(UPDATE|CREATE) => accessible to [Author] with Access=READ_WRITE
 
-* [Book] persists on DataSource=TABLE_STORAGE@starwarsBookTable has Indexes=title:String,
-* [Author] persists on DataSource=BLOB_STORAGE@starwarsAuthorStorage has Indexes=name:String
+* [Query] connects to DataSource=CASSANDRA @alias=StarWarsQuery has Tables=StarWarsBookCache[:id #author]
+* [Mutation] connects to DataSource=DYNAMODB @alias=StarWarsMutation has Tables=StarWarsBook[:id #author],StarWarsAuthor[:id #name]
 
 * [DataInput] AuthorInput { name=[object Object], type=[object Object]  }
 
-* [EnumObject] AuthorType { ROMAN, SCIENTIST  }
+* [EnumObject] AuthorType { JOURNALIST, SCIENTIST  }
 
-* [DataObject] Book { title=[object Object], author=[object Object], comments=[object Object], outofstock=[object Object], types=[object Object]  }
-* [DataObject] Author { id=[object Object], name=[object Object], type=[object Object]  }
+* [DataObject] Book { id=[object Object], title=[object Object], author=[object Object], subauthor=[object Object], comments=[object Object], outofstock=[object Object], types=[object Object], createdDate=[object Object], updatedDate=[object Object]  }
+* [DataObject] NestBook { name=[object Object], id=[object Object]  }
+* [DataObject] Author { id=[object Object], name=[object Object], type=[object Object], ref=[object Object]  }
 - [DataObject] Query { listBooks (...) getBook (...)  }
 - [DataObject] Mutation { addBook (...) deleteBook (...) readBook (...) likeBook (...)  }
+
 ```
 
 ## MyStarWars on AWS Stack CloudFormation Design
