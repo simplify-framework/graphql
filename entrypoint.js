@@ -106,7 +106,15 @@ function buildTemplateFile(data, tplFile) {
 function writeTemplateFile(tplFile, data, outputDir, outputFile, writeConfig) {
     const template = Hogan.compile(JSON.stringify({ input: tplFile, output: outputFile }));
     const config = JSON.parse(template.render(data, {}));
-    const dataFile = buildTemplateFile(data, config.input)
+    let dataFile = buildTemplateFile(data, config.input)
+    if (fs.existsSync(path.resolve(".project-template", config.output))) {
+        dataFile = fs.readFileSync(path.resolve(".project-template", config.output))
+    } else {
+        const templatePath = path.dirname(path.resolve(".project-template", config.output))    
+        if (!fs.existsSync(templatePath)) {
+            mkdirp.sync(templatePath);
+        }
+    }
     const outputPath = path.dirname(path.join(outputDir, config.output))
     if (!fs.existsSync(outputPath)) {
         mkdirp.sync(outputPath);
