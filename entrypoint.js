@@ -294,7 +294,7 @@ function runCommandLine() {
         let projectInfo = {}
         let projectOriginInfo = require(projectInfoPath)
         if (fs.existsSync(projectInfoPath)) {
-            projectInfo = projectFlatter(projectOriginInfo, argv.env)
+            projectInfo = projectFlatter(projectOriginInfo, argv.env || 'demo')
         }
         if (!fs.existsSync(schemaInputFile)) {
             console.log(` * ${CPROMPT}GraphQL Schema '${argv.input}' is not found.${CRESET}`)
