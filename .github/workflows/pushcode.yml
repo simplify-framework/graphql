@@ -23,7 +23,6 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm i -g simplify-graphql
     - run: simplify-graphql template -i schema
-    - run: sed -i '/Profile/s/:.*$/:\ \"default\",/' .projectInfo.json
     - run: simplify-graphql -i schema.graphql -p ${{ secrets.PROJECT_ID }} -a ${{ secrets.AWS_ACCOUNT_ID }} -o $PWD/ci-test
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
