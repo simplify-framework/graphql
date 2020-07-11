@@ -38,7 +38,9 @@ input AuthorInput {
 # case, the "books" query returns an array of zero or more Books (defined above).
 type Query
     @GraphQLServer(Name: "StarwarServerQuery", Engine: LAMBDA)
-    @GraphQLDataSource(Name: "StarWarsQuery", Engine: CASSANDRA, Tables: [ { Name: "StarWarsBookCache", Key: "id", Index: "author" } ]) {
+    @GraphQLDataSource(Name: "StarWarsQuery", Engine: CASSANDRA, Tables: [
+        { Name: "StarWarsBookCache", Key: "id", Index: "author" }
+    ]) {
     listBooks: [Book]
         @GraphQLEndpoint(Path: "/query", Options: { AuthMode: NONE HasApiKey: false })
         @GraphQLResolver(Name: "listBookFunction")

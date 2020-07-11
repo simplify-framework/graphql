@@ -6,17 +6,11 @@ A GraphQL Serverless Architecture Model (GSAM) - Base on amazing [Apollo GraphQL
 ![NPM Downloads](https://img.shields.io/npm/dw/simplify-graphql)
 ![Package Version](https://img.shields.io/github/package-json/v/simplify-framework/graphql?color=green)
 
-## Setup your AWS Master Credential
-
-Goto [AWS Setup Credentials](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html) then create an account to be used to provision a secure Github credentials. The root credentials must have the following permissions to configure your `deployment account` user with least privilege policy. It must has these permissions:
-	+ iam:CreateUser
-	+ iam:CreateRole
-	+ iam:PutUserPolicy
-	+ iam:PutRolePolicy
 		
 ## HOW TO: Build a GraphQL project:
-- `npm install -g simplify-graphql`
-- `simplify-graphql -i schema.graphql`
+- Install this GraphQL CLI: `npm install -g simplify-graphql`
+- Generate a sample schema: `simplify-graphql template -i schema`
+- Generate GraphQL project: `simplify-graphql -i schema.graphql`
 
 > It will help you to create your project step by step...
 
@@ -37,17 +31,7 @@ Goto [AWS Setup Credentials](https://docs.aws.amazon.com/sdk-for-java/v1/develop
     - What is your Endpoint ApiKey? (a4d0c3836b6ab16ece5cabf1887128ff6bddf962): [Enter]
     - Finish code generation with NO error. See current folder for your code!
 
-    * Follow these commands to walk throught your project: (MyStarWars)
-
-   1. Setup AWS Account         : npm run setup-account 
-   2. Install Packages          : npm install 
-   3. Deploy AWS Stacks         : npm run stack-deploy 
-   4. Push Code Functions       : npm run push-code 
-   5. Run your test specs       : npm run test 
-   6. Update Environments       : npm run push-update 
-   7. Monitor Metrics           : npm run monitor-metric 
-   8. Destroy AWS Stacks        : npm run stack-destroy 
-   9. Cleanup AWS Account       : npm run cleanup-account 
+    * See README.md inside your project folder to continue...
 
 ## Security & Operation commands
 

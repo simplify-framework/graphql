@@ -301,7 +301,7 @@ function getResolverRuntime(obj) {
 
 function schemaParser(typeDefs) {
     let rootObject = { Servers: {}, Events: {}, DataSources: {}, DataInputs: {}, DataObjects: {}, EnumObjects: {} }
-    let serverName = null
+    let ServerName = null
     let eventName = null
 
     typeDefs.definitions.map(def => {
@@ -327,20 +327,20 @@ function schemaParser(typeDefs) {
             defs.Directives.map(obj => {
                 obj.Definition = defs.Name
                 if (obj.Kind === "GraphQLServer") {
-                    serverName = serverName !== obj.Name ? obj.Name : serverName
-                    if (!rootObject.Servers[serverName]) {
+                    ServerName = ServerName !== obj.Name ? obj.Name : ServerName
+                    if (!rootObject.Servers[ServerName]) {
                         obj = extendObjectValue(obj, "Name", obj.Name)
-                        rootObject.Servers[serverName] = obj
+                        rootObject.Servers[ServerName] = obj
                         if (!obj.Options) obj.Options = {}
                         obj = getServerRuntime(obj)
                         obj.Options.BurstLimit = obj.Options.BurstLimit || 100
                         obj.Options.RateLimit = obj.Options.RateLimit || 10
                         obj.Options.QuotaLimit = obj.Options.QuotaLimit || 100
                         obj.Options.QuotaUnit = obj.Options.QuotaUnit || 'DAY'
-                        rootObject.Servers[serverName].Definitions = [{ Definition: obj.Definition }]
+                        rootObject.Servers[ServerName].Definitions = [{ Definition: obj.Definition }]
                     } else {
-                        rootObject.Servers[serverName].Definitions.push({ Definition: obj.Definition })
-                        rootObject.Servers[serverName].Definition = rootObject.Servers[serverName].Definitions.map(d => d.Definition).join('')
+                        rootObject.Servers[ServerName].Definitions.push({ Definition: obj.Definition })
+                        rootObject.Servers[ServerName].Definition = rootObject.Servers[ServerName].Definitions.map(d => d.Definition).join('')
                     }
                 } else if (obj.Kind === "GraphQLEvent") {
                     eventName = eventName !== obj.Name ? obj.Name : eventName
@@ -352,7 +352,7 @@ function schemaParser(typeDefs) {
                         process.exit(-1)
                     }
                 } else if (obj.Kind === "GraphQLDataSource") {
-                    const dataSourceKey = `${serverName}-${obj.Engine}`
+                    const dataSourceKey = `${ServerName}-${obj.Engine}`
                     if (!rootObject.DataSources[dataSourceKey]) {
                         obj.Tables = convertToArrayWithNotation(obj.Tables)
                         if (obj.Engine === 'DYNAMODB') obj.isDynamoDB = true
@@ -369,8 +369,8 @@ function schemaParser(typeDefs) {
                         rootObject.DataSources[dataSourceKey].Tables = convertToArrayWithNotation(rootObject.DataSources[dataSourceKey].Tables)
                     }
                 } else if (obj.Kind === "GraphQLResolver") {
-                    const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == obj.Definition)
-                    rootObject.Servers[serverName].Resolver = obj
+                    const serverDef = rootObject.Servers[ServerName].Definitions.find(defin => defin.Definition == obj.Definition)
+                    rootObject.Servers[ServerName].Resolver = obj
                     if (!serverDef.Paths) {
                         serverDef.Paths = {}
                     }
@@ -389,7 +389,7 @@ function schemaParser(typeDefs) {
                         fields.Directives.map(obj => {
                             if (obj.Kind === "GraphQLEndpoint") {
                                 endpointPath = obj.Path || '/'
-                                const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == def.name.value)
+                                const serverDef = rootObject.Servers[ServerName].Definitions.find(defin => defin.Definition == def.name.value)
                                 if (!serverDef.Paths) {
                                     serverDef.Paths = {}
                                 }
@@ -408,7 +408,7 @@ function schemaParser(typeDefs) {
                                 serverDef.Paths[endpointPath].Resolvers.push(obj)
                                 serverDef.Paths[endpointPath].Options = obj.Options
                             } else if (obj.Kind === "GraphQLResolver" || obj.Kind === "GraphQLResolverSet") {
-                                const serverDef = rootObject.Servers[serverName].Definitions.find(defin => defin.Definition == def.name.value)
+                                const serverDef = rootObject.Servers[ServerName].Definitions.find(defin => defin.Definition == def.name.value)
                                 if (!serverDef.Paths) {
                                     serverDef.Paths = {}
                                 }
@@ -428,7 +428,7 @@ function schemaParser(typeDefs) {
                         })
                     }
                 })
-                rootObject.Servers[serverName].Definitions = convertToArrayWithNotation(rootObject.Servers[serverName].Definitions)
+                rootObject.Servers[ServerName].Definitions = convertToArrayWithNotation(rootObject.Servers[ServerName].Definitions)
             }
         }
     })
