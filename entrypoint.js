@@ -191,6 +191,10 @@ function projectSwitchEnv(projectOriginInfo, projectInfo, projectInfoPath) {
             process.exit(-1)
         }
     }
+    if (!projectInfo.PROJECT_DomainName) {
+        projectInfo.PROJECT_DomainName = readlineSync.question(` - ${CPROMPT}What is your Domain name?${CRESET} (${projectInfo.PROJECT_Name.toLowerCase()}.com): `)
+        projectInfo.PROJECT_DomainName = projectInfo.PROJECT_DomainName || `${projectInfo.PROJECT_Name.toLowerCase()}.com`
+    }
     if (!projectInfo.PROJECT_Desc) {
         projectInfo.PROJECT_Desc = readlineSync.question(` - ${CPROMPT}What is your Project description?${CRESET} `)
         if (!projectInfo.PROJECT_Desc) {
@@ -426,6 +430,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                 return parseDefaultObjectValue(rootObject, v)
             }).filter(obj => obj)
             dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
+            func = extendObjectValue(func, "Name", func.Name)
             gqlConfig.Executions.map(cfg => {
                 writeTemplateFile(`${templates}/${cfg.input}`, { ...func, ServerName: server.Name, FunctionName: func.FunctionName, FunctionNameSnake: func.FunctionNameSnake, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
             })

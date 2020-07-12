@@ -4,7 +4,8 @@
       "Version": "0.1.0",
       "Desc": "This is a new start wars",
       "Id": "387ca2d0516f1748",
-      "Profile": "master-account"
+      "Profile": "master-account",
+      "DomainName": "mystarwars.com"
     },
     "Environment": {
       "Active": "demo",
