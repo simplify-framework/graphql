@@ -163,7 +163,7 @@ function projectUpdate(projectOriginInfo, projectInfo) {
         Project: {}, 
         Environment: { 
             Active: projectInfo.ENV_Name,
-            Config: projectOriginInfo.Environment.Config || {}
+            Config: (projectOriginInfo.Environment || { Config: {}}).Config || {}
         } 
     }
     projectResult.Environment.Config[projectInfo.ENV_Name] = {}
