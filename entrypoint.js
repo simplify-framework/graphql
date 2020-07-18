@@ -403,7 +403,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         let dataSources = rootObject.DataSources.filter(ds => ds.Definition.includes(server.Definition))
         dataSources = transformer.convertToArrayWithNotation(dataSources)
         gqlConfig.GraphQLServers.map(cfg => {
-            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, ServerName: server.Name, DataSources: dataSources, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
+            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, ServerName: server.Name, Functions: rootObject.Functions, DataSources: dataSources, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
         })
         rootObject.DataObjects.map(data => {
             argv.verbose && console.log(`   Data Object: ${data.Name}...`)
