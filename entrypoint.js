@@ -28,11 +28,7 @@ function creatFileOrPatch(filePath, newFileData, encoding, config) {
                 "server-input.mustache",
                 "function-input.mustache",
                 "index-src.mustache",
-                "tests.spec.mustache",
-                "webpack.config.mustache",
-                "webpack.config.layer.mustache",
-                "docker-entrypoint.mustache",
-                "Dockerfile.mustache"
+                "tests.spec.mustache"
             ]
             if (config.ignores) {
                 config.ignores.split(';').forEach(function (ignore) {
@@ -402,8 +398,17 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         argv.verbose && console.log(`* GraphQL Server: ${server.Name}...`)
         let dataSources = rootObject.DataSources.filter(ds => ds.Definition.includes(server.Definition))
         dataSources = transformer.convertToArrayWithNotation(dataSources)
+        let serverFunctions = []
+        rootObject.Functions.map(f => {
+            if (f.Servers.find(s => {
+                return s.ServerName == server.Name
+            })) {
+                serverFunctions.push(f)
+            }
+        })
+        serverFunctions = transformer.convertToArrayWithNotation(serverFunctions)
         gqlConfig.GraphQLServers.map(cfg => {
-            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, ServerName: server.Name, Functions: rootObject.Functions, DataSources: dataSources, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
+            writeTemplateFile(`${templates}/${cfg.input}`, { ...projectInfo, ...server, ServerName: server.Name, Functions: serverFunctions, DataSources: dataSources, GRAPHQL_USER_DEFINITIONS: schema }, outputDir, cfg.output, projectInfo.WriteConfig)
         })
         rootObject.DataObjects.map(data => {
             argv.verbose && console.log(`   Data Object: ${data.Name}...`)
