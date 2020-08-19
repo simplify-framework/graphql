@@ -178,7 +178,7 @@ function projectUpdate(projectOriginInfo, projectInfo) {
 
 function projectSwitchEnv(projectOriginInfo, projectInfo, projectInfoPath) {
     projectInfo.PROJECT_Version = projectInfo.PROJECT_Version || "0.1.0"
-    projectInfo.PROJECT_Id = argv.project || projectInfo.PROJECT_Id
+    projectInfo.PROJECT_Id = argv.project || projectInfo.ENV_ProjectId || projectInfo.PROJECT_Id
     projectInfo.ENV_AccountId = argv.account || projectInfo.ENV_AccountId
     if (!projectInfo.PROJECT_Name) {
         projectInfo.PROJECT_Name = readlineSync.question(` - ${CPROMPT}What is your Project name?${CRESET} `)
