@@ -15,7 +15,7 @@
           "AccountId": "463726473274",
           "Region": "eu-west-1",
           "ApiKey": "55e39faadd193384379f1b59f399bf1068f05e48",
-          "Bucket": "starwars",
+          "Bucket": "starwars-deployment",
           "AuthorizerId": "NO"
         }
       }
