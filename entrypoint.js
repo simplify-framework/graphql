@@ -182,25 +182,25 @@ function projectSwitchEnv(projectOriginInfo, projectInfo, projectInfoPath) {
     projectInfo.PROJECT_Version = projectInfo.PROJECT_Version || "0.1.0"
     projectInfo.PROJECT_Id = argv.project || projectInfo.ENV_ProjectId || projectInfo.PROJECT_Id
     projectInfo.ENV_AccountId = argv.account || projectInfo.ENV_AccountId
-    if (!projectInfo.PROJECT_Name) {
+    if (!projectInfo.PROJECT_Name && !argv.simple) {
         projectInfo.PROJECT_Name = readlineSync.question(` - ${CPROMPT}What is your Project name?${CRESET} `)
-        if (!projectInfo.PROJECT_Name) {
+        if (!projectInfo.PROJECT_Name && !argv.simple) {
             console.log(` ! ${CERROR}Project name is required to generate your infrastructure.${CRESET}`)
             process.exit(-1)
         }
     }
-    if (!projectInfo.PROJECT_DomainName) {
+    if (!projectInfo.PROJECT_DomainName && !argv.simple) {
         projectInfo.PROJECT_DomainName = readlineSync.question(` - ${CPROMPT}What is your Domain name?${CRESET} (${projectInfo.PROJECT_Name.toLowerCase()}.com): `)
         projectInfo.PROJECT_DomainName = projectInfo.PROJECT_DomainName || `${projectInfo.PROJECT_Name.toLowerCase()}.com`
     }
-    if (!projectInfo.PROJECT_Desc) {
+    if (!projectInfo.PROJECT_Desc && !argv.simple) {
         projectInfo.PROJECT_Desc = readlineSync.question(` - ${CPROMPT}What is your Project description?${CRESET} `)
         if (!projectInfo.PROJECT_Desc) {
             console.log(` ! ${CERROR}Project description is required to use as package description.${CRESET}`)
             process.exit(-1)
         }
     }
-    if (!projectInfo.PROJECT_Id) {
+    if (!projectInfo.PROJECT_Id && !argv.simple) {
         const randomValue = crypto.randomBytes(8).toString("hex")
         projectInfo.PROJECT_Id = readlineSync.question(` - ${CPROMPT}What is your Project Id?${CRESET} (${randomValue}): `)
         projectInfo.PROJECT_Id = projectInfo.PROJECT_Id || randomValue
@@ -496,7 +496,7 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log(` - Sample graphql schema ${outputSchema}`);
         const infoName = path.join(__dirname, 'templates', '.projectInfo.json')
         const projectInfo = path.resolve(argv.output, '.projectInfo.json')
-        fs.writeFileSync(projectInfo, fs.readFileSync(infoName, 'utf8'), 'utf8')
+        fs.writeFileSync(projectInfo, argv.simple ? { Project: "GraphQL" } : fs.readFileSync(infoName, 'utf8'), 'utf8')
         console.log(` - Sample project config ${projectInfo}`);
         process.exit(0)
     } else {
