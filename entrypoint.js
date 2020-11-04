@@ -102,13 +102,15 @@ function writeTemplateFile(tplFile, data, outputDir, outputFile, writeConfig) {
     const template = Hogan.compile(JSON.stringify({ input: tplFile, output: outputFile }));
     const config = JSON.parse(template.render(data, {}));
     let dataFile = buildTemplateFile(data, config.input)
-    const templateFilePath = path.resolve(".project-template", writeConfig.env, config.output)
-    if (fs.existsSync(templateFilePath)) {
-        dataFile = buildTemplateFile(data, templateFilePath)
-    } else {
-        const templatePath = path.dirname(path.resolve(templateFilePath))
-        if (!fs.existsSync(templatePath)) {
-            mkdirp.sync(templatePath);
+    if (!argv.simple) {
+        const templateFilePath = path.resolve(".project-template", writeConfig.env, config.output)
+        if (fs.existsSync(templateFilePath)) {
+            dataFile = buildTemplateFile(data, templateFilePath)
+        } else {
+            const templatePath = path.dirname(path.resolve(templateFilePath))
+            if (!fs.existsSync(templatePath)) {
+                mkdirp.sync(templatePath);
+            }
         }
     }
     const outputPath = path.dirname(path.join(outputDir, config.output))
@@ -207,35 +209,35 @@ function projectSwitchEnv(projectOriginInfo, projectInfo, projectInfoPath) {
         projectInfo.PROJECT_Profile = readlineSync.question(` - ${CPROMPT}What is your AWS Provisioning Profile?${CRESET} (default): `)
         projectInfo.PROJECT_Profile = projectInfo.PROJECT_Profile || 'default'
     }
-    if (!projectInfo.ENV_Name) {
+    if (!projectInfo.ENV_Name && !argv.simple) {
         projectInfo.ENV_Name = readlineSync.question(` - ${CPROMPT}Create your Deployment Environment?${CRESET} (*demo|devel|staging): `)
         projectInfo.ENV_Name = projectInfo.ENV_Name || 'demo'
     }
-    if (!projectInfo.ENV_Bucket) {
+    if (!projectInfo.ENV_Bucket && !argv.simple) {
         projectInfo.ENV_Bucket = readlineSync.question(` - ${CPROMPT}Choose your Deployment Bucket?${CRESET} (starwars-deployment-eu-west-1): `)
         projectInfo.ENV_Bucket = projectInfo.ENV_Bucket || 'starwars-deployment-eu-west-1'
     }
-    if (!projectInfo.ENV_Region) {
+    if (!projectInfo.ENV_Region && !argv.simple) {
         projectInfo.ENV_Region = readlineSync.question(` - ${CPROMPT}Choose your Deployment Region?${CRESET} (eu-west-1): `)
         projectInfo.ENV_Region = projectInfo.ENV_Region || 'eu-west-1'
     }
-    if (!projectInfo.ENV_Profile) {
+    if (!projectInfo.ENV_Profile && !argv.simple) {
         projectInfo.ENV_Profile = readlineSync.question(` - ${CPROMPT}Create new Deployment Profile?${CRESET} (starwars-eu): `)
         projectInfo.ENV_Profile = projectInfo.ENV_Profile || 'simplify-eu'
     }
-    if (!projectInfo.ENV_AccountId) {
+    if (!projectInfo.ENV_AccountId && !argv.simple) {
         projectInfo.ENV_AccountId = readlineSync.question(` - ${CPROMPT}What is your AWS Account Id?${CRESET} `)
         if (!projectInfo.ENV_AccountId) {
             console.log(` ! ${CERROR}AWS Account Id is required to provision your code with a right permission.${CRESET}`)
             process.exit(-1)
         }
     }
-    if (!projectInfo.ENV_ApiKey) {
+    if (!projectInfo.ENV_ApiKey && !argv.simple) {
         const randomValue = crypto.randomBytes(20).toString("hex")
         projectInfo.ENV_ApiKey = readlineSync.question(` - ${CPROMPT}What is your Endpoint ApiKey?${CRESET} (${randomValue}): `)
         projectInfo.ENV_ApiKey = projectInfo.ENV_ApiKey || randomValue
     }
-    if (!projectInfo.ENV_AuthorizerId) {
+    if (!projectInfo.ENV_AuthorizerId && !argv.simple) {
         if (readlineSync.keyInYN(` - ${CPROMPT}Do you want to enable Cognito UserPool authorizer?${CRESET} `)) {
             projectInfo.ENV_AuthorizerId = readlineSync.question(` - ${CPROMPT}What is your Cognito UserPool Id?${CRESET} (${projectInfo.ENV_Region}_xxxxxx): `)
             projectInfo.ENV_AuthorizerId = projectInfo.ENV_AuthorizerId || "NO"
@@ -268,6 +270,8 @@ yargs.usage('simplify-graphql [template] [options]')
     .string('env')
     .alias('e', 'env')
     .describe('env', 'Environment')
+    .boolean('simple')
+    .describe('simple', 'Generate simple code files')
     .boolean('merge')
     .describe('merge', 'Auto merge files')
     .boolean('diff')
@@ -332,6 +336,9 @@ function runCommandLine() {
         if (typeof argv.verbose !== 'undefined') {
             argv.verbose = true;
         }
+        if (typeof argv.simple !== 'undefined') {
+            argv.simple = true;
+        }
         projectInfo.WriteConfig = { ...config.writes, env: projectInfo.ENV_Name }
         const typeDefs = gql(schema);
         mainProcessor(typeDefs, schema, projectInfo)
@@ -373,10 +380,10 @@ function parseDefaultObjectValue(rootObject, vObj) {
 
 function mainProcessor(typeDefs, schema, projectInfo) {
     const templatePath = require("simplify-templates")
-    const templates = path.join(templatePath, "graphql")
-    const gqlConfig = require(path.join(templatePath, "config-graphql.json"))
+    const templates = path.join(templatePath, argv.simple ? "graphql-code" : "graphql")
+    const gqlConfig = require(path.join(templatePath, argv.simple ? "config-graphcode.json" : "config-graphql.json"))
     const rootObject = hoganFlatter(schemaParser(typeDefs))
-    const outputDir = projectInfo.ProjectOutput || './StarWars'
+    const outputDir = projectInfo.ProjectOutput || '.'
     argv.verbose && console.log("Generating Verbal GASM Design Language... (design.txt)")
     rootObject.DataTables = []
     rootObject.DataSources.map(ds => {
@@ -399,7 +406,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
         let dataSources = rootObject.DataSources.filter(ds => ds.Definition.includes(server.Definition))
         dataSources = transformer.convertToArrayWithNotation(dataSources)
         let serverFunctions = []
-        rootObject.Functions.map(f => {
+        !rootObject.Functions.isEmpty && rootObject.Functions.map(f => {
             if (f.Servers.find(s => {
                 return s.ServerName == server.Name
             })) {
@@ -428,7 +435,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                 if (data.UserType) writeTemplateFile(`${templates}/${cfg.input}`, { ...data, ServerName: server.Name, dataName: data.Name }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
         })
-        rootObject.Functions.map(func => {
+        !rootObject.Functions.isEmpty && rootObject.Functions.map(func => {
             argv.verbose && console.log(`   Remote Function: ${func.FunctionName}...`)
             const dataObject = rootObject.DataObjects.find(obj => obj.Name == func.DataSchema)
             dataObject.Value.map(v => {
@@ -495,7 +502,7 @@ mkdirp(path.resolve(argv.output)).then(function () {
     } else {
         const { err, projectInfo } = runCommandLine()
         console.log(` - Finish code generation ${!err ? `with NO error. See ${argv.output == "./" ? "current folder" : argv.output} for your code!` : err}`);
-        if (!err && projectInfo) {
+        if (!err && projectInfo && !argv.simple) {
             showBanner()
             console.log(` * See README.md inside your project folder to setup provisioning account...\n`)
             console.log(`   1. Setup AWS Account  \t: ${CBEGIN}npm run account-setup ${CRESET}`)
