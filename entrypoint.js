@@ -496,7 +496,7 @@ mkdirp(path.resolve(argv.output)).then(function () {
         console.log(` - Sample graphql schema ${outputSchema}`);
         const infoName = path.join(__dirname, 'templates', '.projectInfo.json')
         const projectInfo = path.resolve(argv.output, '.projectInfo.json')
-        fs.writeFileSync(projectInfo, argv.simple ? { Project: "GraphQL" } : fs.readFileSync(infoName, 'utf8'), 'utf8')
+        fs.writeFileSync(projectInfo, argv.simple ? JSON.stringify({ Project: "GraphQL" }, null, 4) : fs.readFileSync(infoName, 'utf8'), 'utf8')
         console.log(` - Sample project config ${projectInfo}`);
         process.exit(0)
     } else {
