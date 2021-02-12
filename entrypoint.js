@@ -344,7 +344,7 @@ function runCommandLine() {
         mainProcessor(typeDefs, schema, projectInfo)
         return { err: undefined, projectInfo }
     } catch (err) {
-        console.error(`${err}`)
+        console.error(`${err}`, err)
         return { err }
     }
 }
