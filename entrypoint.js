@@ -354,7 +354,9 @@ function parseDefaultObjectValue(rootObject, vObj) {
         let newValue = rootObject.DataObjects.find(obj => obj.Name == vObj.Value.Value)
         if (!newValue) newValue = rootObject.DataInputs.find(obj => obj.Name == vObj.Value.Value)
         if (!newValue) newValue = rootObject.EnumObjects.find(obj => obj.Name == vObj.Value.Value)
-        if (newValue.Type === "EnumObject") {
+        if (!newValue) {
+            throw { message: 'Cannot find any definition of this object in schema.', object: vObj }
+        } else if (newValue.Type === "EnumObject") {
             vObj.Value.Default = newValue.Value[0].Value
             vObj.Value.isEnumObject = true
             vObj.Value.isQuotedType = true
