@@ -123,7 +123,7 @@ function objectValueParse(obj) {
 }
 
 function parseObjectType(obj, name, def) {
-    if (obj === "DateTime" || obj === "List" || obj === "String" || obj === "ID" || obj === "Boolean" || obj === "Int" || obj === "Float") {
+    if (obj === "DateTime" || obj === "List" || obj === "String" || obj === "ID" || obj === "Boolean" || obj === "Long" || obj === "BigInt" || obj === "Int" || obj === "Float") {
         obj = { Name: name, Value: obj, isScalarType: true }
         obj = generateRandomValue(obj)
     } else {
@@ -256,6 +256,12 @@ function generateRandomValue(obj) {
     } else if (obj.Value === "Int") {
         obj.isIntType = true
         obj.Default = randomInteger(0, 9999)
+    } else if (obj.Value === "Long") {
+        obj.isIntType = true
+        obj.Default = randomInteger(0, 99999999)
+    } else if (obj.Value === "BigInt") {
+        obj.isIntType = true
+        obj.Default = randomInteger(0, 999999999999)
     } else if (obj.Value === "Float") {
         obj.Default = randomNumber(0, 9999)
         obj.isFloatType = true
