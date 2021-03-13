@@ -441,7 +441,7 @@ function schemaParser(typeDefs) {
     return rootObject
 }
 
-function hoganFlatter(rootObject) {
+function hoganFlatter(rootObject, mergeFunctions) {
     rootObject.Functions = []
     rootObject.Servers = convertToArrayWithNotation(rootObject.Servers)
     rootObject.DataSources = convertToArrayWithNotation(rootObject.DataSources)
@@ -457,7 +457,7 @@ function hoganFlatter(rootObject) {
             pathsArray = pathsArray.map(path => {
                 path.Resolvers.map(resolver => {
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
-                        if (chain.Run.Mode == "REMOTE") {
+                        if (chain.Run.Mode == "REMOTE" || mergeFunctions) {
                             chain.RemoteExecutionMode = true
                             chain.Run = getResolverRuntime(chain.Run)
                             let remoteFuncDefinition = rootObject.Functions.find(func => func.FunctionName == chain.Run.Name)

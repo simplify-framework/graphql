@@ -103,13 +103,22 @@ function writeTemplateFile(tplFile, data, outputDir, outputFile, writeConfig) {
     const config = JSON.parse(template.render(data, {}));
     let dataFile = buildTemplateFile(data, config.input)
     if (!argv.simple) {
-        const templateFilePath = path.resolve(".project-template", writeConfig.env, config.output)
+        const templateFilePath = path.resolve(".template", config.output)
         if (fs.existsSync(templateFilePath)) {
             dataFile = buildTemplateFile(data, templateFilePath)
+            const templateEnvFilePath = path.resolve(".template", `${config.output}.${writeConfig.env}`)
+            if (fs.existsSync(templateEnvFilePath)) {
+                dataFile = buildTemplateFile(data, templateEnvFilePath)
+            }
         } else {
-            const templatePath = path.dirname(path.resolve(templateFilePath))
-            if (!fs.existsSync(templatePath)) {
-                mkdirp.sync(templatePath);
+            const templateEnvFilePath = path.resolve(".template", `${config.output}.${writeConfig.env}`)
+            if (fs.existsSync(templateEnvFilePath)) {
+                dataFile = buildTemplateFile(data, templateEnvFilePath)
+            } else {
+                const templatePath = path.dirname(path.resolve(templateFilePath))
+                if (!fs.existsSync(templatePath)) {
+                    mkdirp.sync(templatePath);
+                }
             }
         }
     }
@@ -270,8 +279,8 @@ yargs.usage('simplify-graphql [template] [options]')
     .string('env')
     .alias('e', 'env')
     .describe('env', 'Environment')
-    .boolean('simple')
-    .describe('simple', 'Generate simple code files')
+    .string('mode')
+    .describe('mode', 'Generate singleton|multiple code base')
     .boolean('merge')
     .describe('merge', 'Auto merge files')
     .boolean('diff')
@@ -382,9 +391,9 @@ function parseDefaultObjectValue(rootObject, vObj) {
 
 function mainProcessor(typeDefs, schema, projectInfo) {
     const templatePath = require("simplify-templates")
-    const templates = path.join(templatePath, argv.simple ? "graphql-code" : "graphql")
-    const gqlConfig = require(path.join(templatePath, argv.simple ? "config-graphcode.json" : "config-graphql.json"))
-    const rootObject = hoganFlatter(schemaParser(typeDefs))
+    const templates = path.join(templatePath, "graphql")
+    const gqlConfig = require(path.join(templatePath, argv.mode == "singleton" ? "config-graphql-singleton.json" : "config-graphql.json"))
+    const rootObject = hoganFlatter(schemaParser(typeDefs), argv.mode == "singleton")
     const outputDir = projectInfo.ProjectOutput || '.'
     argv.verbose && console.log("Generating Verbal GASM Design Language... (design.txt)")
     rootObject.DataTables = []
