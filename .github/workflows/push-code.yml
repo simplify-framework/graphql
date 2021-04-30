@@ -36,7 +36,7 @@ jobs:
         role-duration-seconds: 1200
     - run: cat .projectInfo.json
     - run: cd $PWD/ci-test && npm install
-    - run: cd $PWD/ci-test && npm run stack-deploy
-    - run: cd $PWD/ci-test && npm run push-code
-    - run: cd $PWD/ci-test && npm run push-config
-    - run: cd $PWD/ci-test && npm run stack-destroy
+    #- run: cd $PWD/ci-test && npm run stack-deploy
+    #- run: cd $PWD/ci-test && npm run push-code
+    #- run: cd $PWD/ci-test && npm run push-config
+    #- run: cd $PWD/ci-test && npm run stack-destroy
