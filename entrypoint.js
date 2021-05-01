@@ -280,7 +280,7 @@ yargs.usage('simplify-graphql [template] [options]')
     .alias('e', 'env')
     .describe('env', 'Environment')
     .string('mode')
-    .describe('mode', 'Generate singleton|multiple code base')
+    .describe('mode', 'Generate micro|multiple code base')
     .boolean('merge')
     .describe('merge', 'Auto merge files')
     .boolean('diff')
@@ -337,7 +337,7 @@ function runCommandLine() {
             config.writes.merge = true;
         }
         if (typeof argv.mode !== 'undefined') {
-            config.writes.singleton = argv.mode === 'singleton' ? true : false;
+            config.writes.micro = argv.mode === 'micro' ? true : false;
         }
         if (typeof argv.ignores !== 'undefined') {
             config.writes.ignores = argv.ignores;
@@ -352,7 +352,7 @@ function runCommandLine() {
             argv.simple = true;
         }
         projectInfo.WriteConfig = { ...config.writes, env: projectInfo.ENV_Name }
-        projectInfo.IsSingleton = config.writes.singleton ? true: undefined
+        projectInfo.IsMicroMode = config.writes.micro ? true: undefined
         const typeDefs = gql(schema);
         mainProcessor(typeDefs, schema, projectInfo)
         return { err: undefined, projectInfo }
@@ -396,8 +396,8 @@ function parseDefaultObjectValue(rootObject, vObj) {
 function mainProcessor(typeDefs, schema, projectInfo) {
     const templatePath = require("simplify-templates")
     const templates = path.join(templatePath, "graphql")
-    const gqlConfig = require(path.join(templatePath, argv.mode == "singleton" ? "config-graphql-singleton.json" : "config-graphql.json"))
-    const rootObject = hoganFlatter(schemaParser(typeDefs), argv.mode == "singleton")
+    const gqlConfig = require(path.join(templatePath, argv.mode == "micro" ? "config-graphql-micro.json" : "config-graphql.json"))
+    const rootObject = hoganFlatter(schemaParser(typeDefs), argv.mode == "micro")
     const outputDir = projectInfo.ProjectOutput || '.'
     argv.verbose && console.log("Generating Verbal GASM Design Language... (design.txt)")
     rootObject.DataTables = []
@@ -451,7 +451,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
             })
         })
         !rootObject.Functions.isEmpty && rootObject.Functions.map(func => {
-            argv.verbose && console.log(`   Remote Function: ${func.FunctionName}...`)
+            argv.verbose && console.log(`   Remote Function: ${func.FunctionName} (${func.Version})...`)
             const dataObject = rootObject.DataObjects.find(obj => obj.Name == func.DataSchema)
             dataObject.Value.map(v => {
                 return parseDefaultObjectValue(rootObject, v)
@@ -459,7 +459,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
             dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
             func = extendObjectValue(func, "Name", func.Name)
             gqlConfig.Executions.map(cfg => {
-                writeTemplateFile(`${templates}/${cfg.input}`, { ...func, ServerName: server.Name, FunctionName: func.FunctionName, FunctionNameSnake: func.FunctionNameSnake, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                writeTemplateFile(`${templates}/${cfg.input}`, { ...func, ServerName: server.Name, FunctionName: func.FunctionName, FunctionVersion: func.Version, FunctionNameSnake: func.FunctionNameSnake, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
             })
         })
         server.Definitions.map(serverDef => {
@@ -470,7 +470,7 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                     dataObject.Value.map(v => {
                         return parseDefaultObjectValue(rootObject, v)
                     }).filter(obj => obj)
-                    argv.verbose && console.log(`+ Resolver: ${resolver.Resolver.Name}...`)
+                    argv.verbose && console.log(`+ Resolver: ${resolver.Resolver.Name} (${resolver.Resolver.Version || 'latest'})...`)
                     gqlConfig.GraphQLResolvers.map(cfg => {
                         let dataModel = { Definition: serverDef.Definition, Path: path.Path, ...resolver, ...resolver.Resolver, ServerName: server.Name, StateName: resolver.Resolver.Name, DataValues: dataObject.Value, ...projectInfo }
                         dataModel = extendObjectValue(dataModel, "Definition", dataModel.Definition)
@@ -479,15 +479,15 @@ function mainProcessor(typeDefs, schema, projectInfo) {
                     })
                     dataObject.Value = transformer.convertToArrayWithNotation(dataObject.Value)
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
-                        argv.verbose && console.log(` - Function: ${chain.Run.Name}...`)
+                        argv.verbose && console.log(` - ChainFunction: ${chain.Run.Name} (${chain.Run.Version || 'latest'})...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, ServerName: server.Name, FunctionName: chain.Run.Name, ServerName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { ...chain, ServerName: server.Name, FunctionName: chain.Run.Name, FunctionVersion: chain.Run.Version, ServerName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     })
                     if (!resolver.Resolver.Chains && resolver.Resolver.Kind == "GraphQLResolver") {
-                        argv.verbose && console.log(` - Function: ${resolver.Resolver.Name}...`)
+                        argv.verbose && console.log(` - ResolverFunction: ${resolver.Resolver.Name} (${resolver.Resolver.Version || 'latest'})...`)
                         gqlConfig.GraphQLFunctions.map(cfg => {
-                            writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver, ServerName: server.Name, FunctionName: resolver.Resolver.Name, ServerName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
+                            writeTemplateFile(`${templates}/${cfg.input}`, { ...resolver, ServerName: server.Name, FunctionName: resolver.Resolver.Name, FunctionVersion: resolver.Resolver.Version, ServerName: server.Name, DataValues: dataObject.Value, ...projectInfo }, outputDir, cfg.output, projectInfo.WriteConfig)
                         })
                     }
                 })

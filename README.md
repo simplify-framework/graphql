@@ -10,7 +10,7 @@ A GraphQL Serverless Architecture Model (GSAM) - Base on amazing [Apollo GraphQL
 ## HOW TO: Build a GraphQL project:
 - Install this GraphQL CLI: `npm install -g simplify-graphql`
 - Generate a sample schema: `simplify-graphql template -i schema`
-- Generate GraphQL project: `simplify-graphql -i schema.graphql`
+- Generate GraphQL project: `simplify-graphql -i schema.graphql --mode micro`
 
 > It will help you to create your project step by step...
 

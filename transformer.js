@@ -336,6 +336,7 @@ function schemaParser(typeDefs) {
                     ServerName = ServerName !== obj.Name ? obj.Name : ServerName
                     if (!rootObject.Servers[ServerName]) {
                         obj = extendObjectValue(obj, "Name", obj.Name)
+                        obj = extendObjectValue(obj, "Version", obj.Version)
                         rootObject.Servers[ServerName] = obj
                         if (!obj.Options) obj.Options = {}
                         obj = getServerRuntime(obj)
@@ -429,6 +430,7 @@ function schemaParser(typeDefs) {
                                         resolver.Resolver.Chains = convertToArrayWithNotation(resolver.Resolver.Chains)
                                     }
                                     resolver.Resolver = extendObjectValue(resolver.Resolver, "Name", obj.Name)
+                                    resolver.Resolver = extendObjectValue(resolver.Resolver, "Version", obj.Version)
                                 }
                             }
                         })
