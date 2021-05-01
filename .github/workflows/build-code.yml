@@ -1,7 +1,7 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: DevOps CI/CD
+name: Package Build
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
     branches: [ master ]
 
 jobs:
-  test-starwars:
+  gen-template:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,7 +36,7 @@ jobs:
         role-duration-seconds: 1200
     - run: cat .projectInfo.json
     - run: cd $PWD/ci-test && npm install
-    - run: cd $PWD/ci-test && npm run stack-deploy
-    - run: cd $PWD/ci-test && npm run push-code
-    - run: cd $PWD/ci-test && npm run push-config
-    - run: cd $PWD/ci-test && npm run stack-destroy
+    #- run: cd $PWD/ci-test && npm run stack-deploy
+    #- run: cd $PWD/ci-test && npm run push-code
+    #- run: cd $PWD/ci-test && npm run push-config
+    #- run: cd $PWD/ci-test && npm run stack-destroy

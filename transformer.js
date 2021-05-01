@@ -457,7 +457,7 @@ function hoganFlatter(rootObject, mergeFunctions) {
             pathsArray = pathsArray.map(path => {
                 path.Resolvers.map(resolver => {
                     resolver.Resolver.Chains && resolver.Resolver.Chains.map(chain => {
-                        if (chain.Run.Mode == "REMOTE" || mergeFunctions) {
+                        if (chain.Run.Mode == "REMOTE") {
                             chain.RemoteExecutionMode = true
                             chain.Run = getResolverRuntime(chain.Run)
                             let remoteFuncDefinition = rootObject.Functions.find(func => func.FunctionName == chain.Run.Name)

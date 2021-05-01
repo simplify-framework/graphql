@@ -336,6 +336,9 @@ function runCommandLine() {
         if (typeof argv.merge !== 'undefined') {
             config.writes.merge = true;
         }
+        if (typeof argv.mode !== 'undefined') {
+            config.writes.singleton = argv.mode === 'singleton' ? true : false;
+        }
         if (typeof argv.ignores !== 'undefined') {
             config.writes.ignores = argv.ignores;
         }
@@ -349,6 +352,7 @@ function runCommandLine() {
             argv.simple = true;
         }
         projectInfo.WriteConfig = { ...config.writes, env: projectInfo.ENV_Name }
+        projectInfo.IsSingleton = config.writes.singleton ? true: undefined
         const typeDefs = gql(schema);
         mainProcessor(typeDefs, schema, projectInfo)
         return { err: undefined, projectInfo }
